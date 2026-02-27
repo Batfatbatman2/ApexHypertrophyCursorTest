@@ -187,6 +187,10 @@ export default function WorkoutScreen() {
     }
   }, [footerAction, exercise, handleCompleteSet, maybeShowRpeThenNavigate]);
 
+  const handleDismissPrToast = useCallback(() => {
+    setPrToast({ visible: false, exerciseName: '', types: [] });
+  }, []);
+
   if (status !== 'active' || !exercise) {
     return (
       <SafeAreaView style={s.safe}>
@@ -206,170 +210,171 @@ export default function WorkoutScreen() {
         : 'MARK SET COMPLETE';
 
   return (
-    <SafeAreaView style={s.safe}>
-      {/* ── Header ───────────────────────────────── */}
-      <View style={s.header}>
-        <Pressable onPress={handleClose} hitSlop={12}>
-          <FontAwesome name="close" size={20} color={Colors.textSecondary} />
-        </Pressable>
-        <View style={s.headerCenter}>
-          <Text style={s.headerTitle}>{workoutName}</Text>
-          <Text style={s.headerTimer}>⏱ {formatTime(elapsedSeconds)}</Text>
-        </View>
-        <Text style={s.headerCounter}>
-          {currentExerciseIndex + 1}/{exercises.length}
-        </Text>
-      </View>
-
-      {/* ── Body ─────────────────────────────────── */}
-      <ScrollView
-        style={s.body}
-        contentContainerStyle={s.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Exercise Header */}
-        <Text style={s.exerciseName}>{exercise.exerciseName}</Text>
-        <View style={s.tagRow}>
-          {exercise.muscleGroups.slice(0, 2).map((m) => (
-            <Badge key={m} label={m} variant="accent" />
-          ))}
-          <Badge label={exercise.equipment} variant="muted" />
-        </View>
-
-        {/* Set Table Header */}
-        <View style={s.tableHeader}>
-          <Text style={[s.colHeader, s.colSet]}>SET</Text>
-          <Text style={[s.colHeader, s.colPrev]}>PREVIOUS</Text>
-          <Text style={[s.colHeader, s.colWeight]}>WEIGHT</Text>
-          <Text style={[s.colHeader, s.colReps]}>REPS</Text>
-          <View style={s.colCheck} />
-        </View>
-
-        {/* Set Rows */}
-        {exercise.sets.map((set) => (
-          <SetRowComponent
-            key={set.id}
-            set={set}
-            exerciseIndex={currentExerciseIndex}
-            onTypeTap={() => setPickerSetId(set.id)}
-            onComplete={() => handleCompleteSet(set.id)}
-          />
-        ))}
-
-        {/* Add Set */}
-        <View style={s.addRow}>
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              store.addSet(currentExerciseIndex);
-            }}
-            style={s.addSetBtn}
-          >
-            <FontAwesome name="plus-circle" size={14} color={Colors.success} />
-            <Text style={s.addSetText}>Add Set</Text>
-          </Pressable>
-        </View>
-
-        {/* Up Next Preview */}
-        {nextExercise && (
-          <Card padding={16} style={s.upNextCard}>
-            <Text style={s.upNextLabel}>UP NEXT</Text>
-            <Text style={s.upNextName}>{nextExercise.exerciseName}</Text>
-            <View style={s.upNextTags}>
-              {nextExercise.muscleGroups.slice(0, 2).map((m) => (
-                <Badge key={m} label={m} variant="accent" />
-              ))}
-              <Badge label={nextExercise.equipment} variant="muted" />
-              <Text style={s.upNextSets}>{nextExercise.sets.length} sets</Text>
-            </View>
-          </Card>
-        )}
-      </ScrollView>
-
-      {/* ── PR Toast ────────────────────────────── */}
+    <View style={s.rootWrap}>
+      {/* ── PR Toast (rendered above SafeAreaView) ── */}
       <PRToast
         visible={prToast.visible}
         exerciseName={prToast.exerciseName}
         prTypes={prToast.types}
-        onDismiss={() => setPrToast({ visible: false, exerciseName: '', types: [] })}
+        onDismiss={handleDismissPrToast}
       />
-
-      {/* ── Rest Timer (compact bottom bar) ────── */}
-      <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
-
-      {/* ── Footer ───────────────────────────────── */}
-      <View style={s.footer}>
-        {/* Back nav — only when not on first exercise */}
-        {currentExerciseIndex > 0 && (
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              maybeShowRpeThenNavigate('prev');
-            }}
-            style={s.navBtn}
-          >
-            <FontAwesome name="chevron-left" size={16} color={Colors.textSecondary} />
+      <SafeAreaView style={s.safe}>
+        {/* ── Header ───────────────────────────────── */}
+        <View style={s.header}>
+          <Pressable onPress={handleClose} hitSlop={12}>
+            <FontAwesome name="close" size={20} color={Colors.textSecondary} />
           </Pressable>
-        )}
+          <View style={s.headerCenter}>
+            <Text style={s.headerTitle}>{workoutName}</Text>
+            <Text style={s.headerTimer}>⏱ {formatTime(elapsedSeconds)}</Text>
+          </View>
+          <Text style={s.headerCounter}>
+            {currentExerciseIndex + 1}/{exercises.length}
+          </Text>
+        </View>
 
-        <Button
-          title={footerLabel}
-          variant={footerAction === 'finish' ? 'primary' : 'primary'}
-          size="lg"
-          onPress={handleFooterPress}
-          style={s.mainBtn}
-          icon={
-            footerAction === 'finish' ? (
-              <FontAwesome name="check" size={15} color="#FFF" />
-            ) : footerAction === 'next' ? (
-              <FontAwesome name="arrow-right" size={14} color="#FFF" />
-            ) : undefined
-          }
-        />
-      </View>
+        {/* ── Body ─────────────────────────────────── */}
+        <ScrollView
+          style={s.body}
+          contentContainerStyle={s.bodyContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Exercise Header */}
+          <Text style={s.exerciseName}>{exercise.exerciseName}</Text>
+          <View style={s.tagRow}>
+            {exercise.muscleGroups.slice(0, 2).map((m) => (
+              <Badge key={m} label={m} variant="accent" />
+            ))}
+            <Badge label={exercise.equipment} variant="muted" />
+          </View>
 
-      {/* ── Set Type Picker ──────────────────────── */}
-      <BottomSheetModal visible={pickerSetId !== null} onClose={() => setPickerSetId(null)}>
-        <Text style={s.pickerTitle}>Set Type</Text>
-        {(Object.keys(SET_TYPES) as SetType[]).map((type) => {
-          const config = SET_TYPES[type];
-          const currentSet = exercise.sets.find((st) => st.id === pickerSetId);
-          const isSelected = currentSet?.setType === type;
-          return (
+          {/* Set Table Header */}
+          <View style={s.tableHeader}>
+            <Text style={[s.colHeader, s.colSet]}>SET</Text>
+            <Text style={[s.colHeader, s.colPrev]}>PREVIOUS</Text>
+            <Text style={[s.colHeader, s.colWeight]}>WEIGHT</Text>
+            <Text style={[s.colHeader, s.colReps]}>REPS</Text>
+            <View style={s.colCheck} />
+          </View>
+
+          {/* Set Rows */}
+          {exercise.sets.map((set) => (
+            <SetRowComponent
+              key={set.id}
+              set={set}
+              exerciseIndex={currentExerciseIndex}
+              onTypeTap={() => setPickerSetId(set.id)}
+              onComplete={() => handleCompleteSet(set.id)}
+            />
+          ))}
+
+          {/* Add Set */}
+          <View style={s.addRow}>
             <Pressable
-              key={type}
               onPress={() => {
-                haptics.selection();
-                if (pickerSetId) {
-                  store.changeSetType(currentExerciseIndex, pickerSetId, type);
-                }
-                setPickerSetId(null);
+                haptics.light();
+                store.addSet(currentExerciseIndex);
               }}
-              style={[s.pickerRow, isSelected && s.pickerRowSelected]}
+              style={s.addSetBtn}
             >
-              <View style={[s.pickerIcon, { backgroundColor: config.color + '22' }]}>
-                <Text style={{ fontSize: 18 }}>{config.icon}</Text>
-              </View>
-              <Text style={[s.pickerLabel, isSelected && { color: config.color }]}>
-                {config.label}
-              </Text>
-              {isSelected && <FontAwesome name="check" size={16} color={config.color} />}
+              <FontAwesome name="plus-circle" size={14} color={Colors.success} />
+              <Text style={s.addSetText}>Add Set</Text>
             </Pressable>
-          );
-        })}
-      </BottomSheetModal>
+          </View>
 
-      {/* ── RPE Feedback Modal (exercise-level) ─── */}
-      <RPEModal
-        visible={showRpe}
-        exerciseName={
-          rpeExerciseIndex !== null ? (exercises[rpeExerciseIndex]?.exerciseName ?? '') : ''
-        }
-        completedSetsCount={rpeExerciseIndex !== null ? completedSetsCount(rpeExerciseIndex) : 0}
-        onSubmit={handleRpeSubmit}
-        onSkip={handleRpeSkip}
-      />
-    </SafeAreaView>
+          {/* Up Next Preview */}
+          {nextExercise && (
+            <Card padding={16} style={s.upNextCard}>
+              <Text style={s.upNextLabel}>UP NEXT</Text>
+              <Text style={s.upNextName}>{nextExercise.exerciseName}</Text>
+              <View style={s.upNextTags}>
+                {nextExercise.muscleGroups.slice(0, 2).map((m) => (
+                  <Badge key={m} label={m} variant="accent" />
+                ))}
+                <Badge label={nextExercise.equipment} variant="muted" />
+                <Text style={s.upNextSets}>{nextExercise.sets.length} sets</Text>
+              </View>
+            </Card>
+          )}
+        </ScrollView>
+
+        {/* ── Rest Timer (compact bottom bar) ────── */}
+        <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
+
+        {/* ── Footer ───────────────────────────────── */}
+        <View style={s.footer}>
+          {/* Back nav — only when not on first exercise */}
+          {currentExerciseIndex > 0 && (
+            <Pressable
+              onPress={() => {
+                haptics.light();
+                maybeShowRpeThenNavigate('prev');
+              }}
+              style={s.navBtn}
+            >
+              <FontAwesome name="chevron-left" size={16} color={Colors.textSecondary} />
+            </Pressable>
+          )}
+
+          <Button
+            title={footerLabel}
+            variant={footerAction === 'finish' ? 'primary' : 'primary'}
+            size="lg"
+            onPress={handleFooterPress}
+            style={s.mainBtn}
+            icon={
+              footerAction === 'finish' ? (
+                <FontAwesome name="check" size={15} color="#FFF" />
+              ) : footerAction === 'next' ? (
+                <FontAwesome name="arrow-right" size={14} color="#FFF" />
+              ) : undefined
+            }
+          />
+        </View>
+
+        {/* ── Set Type Picker ──────────────────────── */}
+        <BottomSheetModal visible={pickerSetId !== null} onClose={() => setPickerSetId(null)}>
+          <Text style={s.pickerTitle}>Set Type</Text>
+          {(Object.keys(SET_TYPES) as SetType[]).map((type) => {
+            const config = SET_TYPES[type];
+            const currentSet = exercise.sets.find((st) => st.id === pickerSetId);
+            const isSelected = currentSet?.setType === type;
+            return (
+              <Pressable
+                key={type}
+                onPress={() => {
+                  haptics.selection();
+                  if (pickerSetId) {
+                    store.changeSetType(currentExerciseIndex, pickerSetId, type);
+                  }
+                  setPickerSetId(null);
+                }}
+                style={[s.pickerRow, isSelected && s.pickerRowSelected]}
+              >
+                <View style={[s.pickerIcon, { backgroundColor: config.color + '22' }]}>
+                  <Text style={{ fontSize: 18 }}>{config.icon}</Text>
+                </View>
+                <Text style={[s.pickerLabel, isSelected && { color: config.color }]}>
+                  {config.label}
+                </Text>
+                {isSelected && <FontAwesome name="check" size={16} color={config.color} />}
+              </Pressable>
+            );
+          })}
+        </BottomSheetModal>
+
+        {/* ── RPE Feedback Modal (exercise-level) ─── */}
+        <RPEModal
+          visible={showRpe}
+          exerciseName={
+            rpeExerciseIndex !== null ? (exercises[rpeExerciseIndex]?.exerciseName ?? '') : ''
+          }
+          completedSetsCount={rpeExerciseIndex !== null ? completedSetsCount(rpeExerciseIndex) : 0}
+          onSubmit={handleRpeSubmit}
+          onSkip={handleRpeSkip}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -456,6 +461,7 @@ function SetRowComponent({
    Styles
    ═══════════════════════════════════════════════════ */
 const s = StyleSheet.create({
+  rootWrap: { flex: 1, position: 'relative' },
   safe: { flex: 1, backgroundColor: Colors.background },
   emptyCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   emptyText: { color: Colors.textSecondary, fontSize: 16 },
