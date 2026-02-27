@@ -399,14 +399,14 @@ Matching mockup screenshots 10 and 11.
 
 ## Phase 11: Personal Record (PR) System
 
-- [ ] **11.1** PR detection engine — runs on every completed set:
+- [x] **11.1** PR detection engine — runs on every completed set:
   - Weight PR (heaviest weight for given reps)
   - Rep PR (most reps at given weight)
   - Volume PR (weight × reps highest product)
-- [ ] **11.2** Celebration modal — confetti particles (Skia), multi-stage haptics, badge display
-- [ ] **11.3** PR history view per exercise — dates, values, % improvement, link to session
-- [ ] **11.4** PR counter widget on home screen
-- [ ] **11.5** Badge system (Weight / Rep / Volume icons)
+- [x] **11.2** Celebration toast — golden PR toast with haptics + badge chips (non-blocking)
+- [x] **11.3** PR history view per exercise — dates, values, PR timeline with color-coded dots
+- [x] **11.4** PR counter widget on home screen (tappable, navigates to PR history)
+- [x] **11.5** Badge system (Weight 🏋️ gold / Rep 🔁 green / Volume 📊 cyan)
 
 ---
 
