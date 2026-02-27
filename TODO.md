@@ -238,17 +238,17 @@ Build the reusable component library that every screen depends on.
 
 Define all local database models matching the feature spec.
 
-- [ ] **3.1** `User` model — profile fields, training age, goal, equipment, unit prefs
-- [ ] **3.2** `Program` model — name, description, goal, isActive, scheduleType (rolling/fixed)
-- [ ] **3.3** `WorkoutDay` model — belongs to Program, dayNumber, name, isRestDay
-- [ ] **3.4** `ProgramExercise` model — belongs to WorkoutDay, exerciseId, order, sets, reps, setType
-- [ ] **3.5** `Exercise` model — name, muscleGroups[], equipment, movementPattern, isCompound, SFR, cues, isCustom
-- [ ] **3.6** `WorkoutSession` model — date, programId, workoutDayId, startTime, endTime, status (active/completed/abandoned)
-- [ ] **3.7** `SetLog` model — belongs to WorkoutSession, exerciseId, setNumber, setType (warmup/working/myorep/dropset), weight, reps, rpe, muscleConnection, isCompleted, notes
-- [ ] **3.8** `PersonalRecord` model — exerciseId, type (weight/rep/volume), value, date, sessionId
-- [ ] **3.9** `ReadinessSurvey` model — date, soreness, sleep, stress, energy, notes
-- [ ] **3.10** `AIProfile` model — MEV/MRV per muscle, volumeSensitivity, recoveryHours, stressMultiplier, fatigueIndex, learningPhase
-- [ ] **3.11** Write schema migrations and seed 211+ exercises from `constants/exercises.ts`
+- [x] **3.1** `User` model — profile fields, training age, goal, equipment, unit prefs, injuries (JSON), timestamps
+- [x] **3.2** `Program` model — name, description, goal, isActive, scheduleType, userId, has_many workoutDays + workoutSessions
+- [x] **3.3** `WorkoutDay` model — belongs_to Program, dayNumber, name, isRestDay, estimatedDuration, has_many programExercises
+- [x] **3.4** `ProgramExercise` model — belongs_to WorkoutDay + Exercise, orderIndex, sets, reps, setType, notes
+- [x] **3.5** `Exercise` model — name, muscleGroups (JSON), equipment, movementPattern, isCompound, sfrRating, cues, isCustom, status
+- [x] **3.6** `WorkoutSession` model — programId, workoutDayId, userId, startTime, endTime, status, notes, has_many setLogs
+- [x] **3.7** `SetLog` model — belongs_to WorkoutSession + Exercise, setNumber, setType, weight, reps, rpe, muscleConnection, isCompleted, notes, parentSetId (for drop sets)
+- [x] **3.8** `PersonalRecord` model — exerciseId, userId, prType (weight/rep/volume), value, weight, reps, sessionId, achievedAt
+- [x] **3.9** `ReadinessSurvey` model — userId, soreness, sleepQuality, stressLevel, energyLevel, notes, surveyedAt
+- [x] **3.10** `AIProfile` model — userId, mevPerMuscle (JSON), mrvPerMuscle (JSON), optimalVolumeZone (JSON), volumeSensitivity, recoveryHours, stressMultiplier, fatigueIndex, learningPhase
+- [x] **3.11** Full `appSchema` with 10 tables, indexed foreign keys, LokiJS adapter for web, migrations scaffold, 211 exercises seed data across 12 muscle groups
 
 ---
 
