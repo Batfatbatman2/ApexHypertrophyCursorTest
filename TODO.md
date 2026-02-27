@@ -313,10 +313,10 @@ Matching mockup screenshots 7, 8, and 12. This is the core feature.
 - [x] **6.10** UP NEXT preview card — next exercise name, muscle/equipment badges, set count
 - [x] **6.11** Left/right arrow navigation between exercises in footer
 - [x] **6.route** Wired from Home START WORKOUT → loads active program exercises → opens fullscreen workout modal
-- [ ] **6.8** Ghost/AI pre-fill from last session (deferred — needs workout history)
+- [x] **6.8** Ghost/AI pre-fill from last session — looks up history store for matching exercises, pre-fills weight/reps, shows in PREV column
 - [ ] **6.12** Auto warm-up ramps (deferred)
 - [ ] **6.13** Quick-Swap (deferred)
-- [ ] **6.14** Per-set notes (deferred)
+- [x] **6.14** Per-set notes — notes field on ActiveSet, included in all set creation methods
 - [ ] **6.15** Session persistence to DB (deferred — needs WatermelonDB integration)
 
 ---
@@ -392,7 +392,7 @@ Matching mockup screenshots 10 and 11.
   - Stats: sets, time, RPE (red number)
   - Expandable exercise breakdown with sets×reps @ weight
   - "+N more exercises" expandable
-- [ ] **10.6** Strength progression line charts per exercise
+- [x] **10.6** Strength progression line charts per exercise — SVG dot+line chart with exercise selector chips, min/max labels, integrated into Analytics
 - [ ] **10.7** Correlation engine scatter plots (sleep vs strength, stress vs RPE)
 
 ---
@@ -424,7 +424,7 @@ Matching mockup screenshots 10 and 11.
   7. Autonomy Progression — learn from user overrides
 - [ ] **12.4** AI Profile model with learning phases: Initial → Calibrating → Optimized → Plateau
 - [ ] **12.5** Confidence percentage + reasoning display on every recommendation
-- [ ] **12.6** Daily Readiness Survey (morning modal): soreness, sleep, stress, energy sliders
+- [x] **12.6** Daily Readiness Survey — full-screen modal with 4 colored metric sliders (soreness/sleep/stress/energy), live score calculation, notes, home screen integration with check-in prompt and score badge
 - [ ] **12.7** Weekly Coach Report:
   - Headline summary
   - Key improvements
