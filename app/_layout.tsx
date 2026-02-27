@@ -1,18 +1,19 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import '../global.css';
+import { useAuthStore } from '@/stores/auth-store';
 
 export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: '(auth)',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -36,6 +37,10 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  const { isAuthenticated, hasOnboarded } = useAuthStore();
+  const segments = useSegments();
+  const router = useRouter();
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -46,13 +51,26 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    if (!loaded) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (isAuthenticated && hasOnboarded && inAuthGroup) {
+      router.replace('/(tabs)');
+    } else if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, hasOnboarded, segments, loaded, router]);
+
   if (!loaded) {
     return null;
   }
 
   return (
     <ThemeProvider value={ApexDarkTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+        <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
       </Stack>
       <StatusBar style="light" />

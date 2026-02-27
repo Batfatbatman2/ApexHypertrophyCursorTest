@@ -218,19 +218,19 @@ Build the reusable component library that every screen depends on.
 
 ## Phase 2: Authentication & Onboarding
 
-- [ ] **2.1** Supabase Auth setup — email/password + Apple Sign-In + Google Sign-In
-- [ ] **2.2** Login screen — biometric unlock option via `expo-local-authentication`
-- [ ] **2.3** 8-step onboarding flow with shared progress bar:
-  1. Welcome / value prop
-  2. Training age (beginner/intermediate/advanced)
-  3. Primary goal (Hypertrophy / Strength / Endurance / General Fitness)
-  4. Equipment access (Full Gym / Home Gym / Bodyweight)
-  5. Age + Gender
-  6. Bodyweight + unit selection (lbs/kg)
-  7. Preferred training days per week (3–7 slider)
-  8. Injury history (optional multi-select)
-- [ ] **2.4** Seed initial AI learning profile from onboarding answers
-- [ ] **2.5** Store onboarding state in Zustand + persist to WatermelonDB
+- [x] **2.1** Supabase Auth setup — client configured (`lib/supabase.ts`), auth store with signIn/signOut/skipAuth (`stores/auth-store.ts`)
+- [x] **2.2** Login screen — email/password form, Apple/Google social buttons, biometric sign-in, Sign Up toggle, Skip for now (`app/(auth)/login.tsx`)
+- [x] **2.3** 8-step onboarding wizard with shared progress bar (`app/(auth)/onboarding.tsx`):
+  1. Welcome — bolt icon, feature highlights, skip option
+  2. Training Age — beginner/intermediate/advanced cards with emoji icons
+  3. Training Goal — hypertrophy/strength/endurance/general with red selection border
+  4. Equipment — full gym/home gym/bodyweight with descriptions
+  5. Age + Gender — numeric input + pill selector (male/female/other/prefer not to say)
+  6. Bodyweight — LBS/KG toggle + large centered numeric input
+  7. Training Days — 2–7 day selector buttons + smart split recommendation card
+  8. Injuries — multi-select chip grid (lower back, shoulders, knees, etc.)
+- [x] **2.4** Seed initial AI learning profile from onboarding answers (`lib/ai/seed-profile.ts`) — MEV/MRV per muscle, volume sensitivity, recovery hours, learning phase
+- [x] **2.5** Store onboarding state in Zustand (`stores/onboarding-store.ts`) + root layout auth routing (`app/_layout.tsx`)
 
 ---
 
