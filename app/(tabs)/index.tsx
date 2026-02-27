@@ -9,6 +9,8 @@ import { Colors } from '@/constants/Colors';
 import { haptics } from '@/lib/haptics';
 import { useProgramStore } from '@/stores/program-store';
 import { useWorkoutStore, buildSetsForExercise } from '@/stores/workout-store';
+import { useHistoryStore } from '@/stores/history-store';
+import { usePRStore } from '@/stores/pr-store';
 import {
   HeroWorkoutCard,
   WeeklyVolumeRings,
@@ -102,17 +104,22 @@ const MOCK_EXERCISES = [
   },
 ];
 
-const MOCK_STATS: StatItem[] = [
-  { value: '1', label: 'Workouts' },
-  { value: '4', label: 'Total Sets' },
-  { value: '1', label: 'PRs Set' },
-];
-
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isRestDay, setIsRestDay] = useState(false);
   const { getActiveProgram } = useProgramStore();
   const { startWorkout } = useWorkoutStore();
+  const workoutCount = useHistoryStore((s) => s.workouts.length);
+  const totalSets = useHistoryStore((s) =>
+    s.workouts.reduce((sum, w) => sum + w.totalSetsCompleted, 0),
+  );
+  const totalPRs = usePRStore((s) => s.totalPRCount);
+
+  const liveStats: StatItem[] = [
+    { value: String(workoutCount), label: 'Workouts' },
+    { value: String(totalSets), label: 'Total Sets' },
+    { value: String(totalPRs), label: 'PRs Set' },
+  ];
 
   const handleStartWorkout = useCallback(() => {
     haptics.medium();
@@ -197,7 +204,7 @@ export default function HomeScreen() {
         <RecentWorkouts workouts={MOCK_RECENT} />
 
         {/* ── Stats ──────────────────────────────────── */}
-        <StatsRow stats={MOCK_STATS} />
+        <StatsRow stats={liveStats} />
       </ScrollView>
     </SafeAreaView>
   );

@@ -9,10 +9,12 @@ import { SET_TYPES, type SetType } from '@/constants/set-types';
 import { Button, Card, Badge, BottomSheetModal } from '@/components/ui';
 import { RPEModal } from '@/components/workout/RPEModal';
 import { RestTimer } from '@/components/workout/RestTimer';
+import { PRToast } from '@/components/workout/PRToast';
 import { haptics } from '@/lib/haptics';
 import { useWorkoutStore, type ActiveSet } from '@/stores/workout-store';
 import { useTimerStore } from '@/stores/timer-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { usePRStore, type PRType } from '@/stores/pr-store';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -32,8 +34,14 @@ export default function WorkoutScreen() {
   const [rpeExerciseIndex, setRpeExerciseIndex] = useState<number | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [pendingNav, setPendingNav] = useState<'next' | 'prev' | 'finish' | null>(null);
+  const [prToast, setPrToast] = useState<{
+    visible: boolean;
+    exerciseName: string;
+    types: PRType[];
+  }>({ visible: false, exerciseName: '', types: [] });
   const restTimer = useTimerStore();
   const { defaultRestDuration, autoStartTimer } = useSettingsStore();
+  const checkForPR = usePRStore((s) => s.checkForPR);
 
   useEffect(() => {
     if (status === 'active') {
@@ -112,12 +120,25 @@ export default function WorkoutScreen() {
       haptics.success();
       store.completeSet(currentExerciseIndex, setId);
 
+      const prResult = checkForPR(exercise.exerciseName, st.weight, st.reps);
+      if (prResult.isNewPR) {
+        setPrToast({ visible: true, exerciseName: exercise.exerciseName, types: prResult.types });
+      }
+
       if (autoStartTimer) {
         restTimer.start(defaultRestDuration);
         setShowRestTimer(true);
       }
     },
-    [exercise, currentExerciseIndex, store, autoStartTimer, defaultRestDuration, restTimer],
+    [
+      exercise,
+      currentExerciseIndex,
+      store,
+      autoStartTimer,
+      defaultRestDuration,
+      restTimer,
+      checkForPR,
+    ],
   );
 
   const handleRpeSubmit = useCallback(
@@ -264,6 +285,14 @@ export default function WorkoutScreen() {
           </Card>
         )}
       </ScrollView>
+
+      {/* ── PR Toast ────────────────────────────── */}
+      <PRToast
+        visible={prToast.visible}
+        exerciseName={prToast.exerciseName}
+        prTypes={prToast.types}
+        onDismiss={() => setPrToast({ visible: false, exerciseName: '', types: [] })}
+      />
 
       {/* ── Rest Timer (compact bottom bar) ────── */}
       <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />

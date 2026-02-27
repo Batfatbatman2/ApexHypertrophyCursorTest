@@ -9,6 +9,8 @@ import 'react-native-reanimated';
 
 import '../global.css';
 import { useAuthStore } from '@/stores/auth-store';
+import { useHistoryStore } from '@/stores/history-store';
+import { usePRStore } from '@/stores/pr-store';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -40,10 +42,16 @@ export default function RootLayout() {
   const { isAuthenticated, hasOnboarded } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const historyWorkouts = useHistoryStore((s) => s.workouts);
+  const buildPRsFromHistory = usePRStore((s) => s.buildFromHistory);
 
   useEffect(() => {
     if (error) throw error;
   }, [error]);
+
+  useEffect(() => {
+    buildPRsFromHistory(historyWorkouts);
+  }, [historyWorkouts, buildPRsFromHistory]);
 
   useEffect(() => {
     if (loaded) {
@@ -83,6 +91,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="workout/summary/[id]"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="prs/index"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
       </Stack>
       <StatusBar style="light" />
