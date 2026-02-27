@@ -50,8 +50,7 @@ export const usePRStore = create<PRState>((set, get) => ({
 
     for (const workout of sorted) {
       for (const ex of workout.exercises) {
-        const completed = ex.sets.filter((s) => s.isCompleted);
-        if (completed.length === 0) continue;
+        if (ex.completedSets === 0) continue;
 
         const key = prKey(ex.exerciseName);
         if (!records[key]) {
@@ -65,18 +64,19 @@ export const usePRStore = create<PRState>((set, get) => ({
         }
 
         const rec = records[key];
+        const w = ex.topWeight;
+        const r = ex.topReps;
 
-        for (const s of completed) {
-          if (s.weight <= 0 || s.reps <= 0) continue;
-          const vol = s.weight * s.reps;
+        if (w > 0 && r > 0) {
+          const vol = ex.totalVolume;
 
-          if (!rec.weightPR || s.weight > rec.weightPR.value) {
+          if (!rec.weightPR || w > rec.weightPR.value) {
             const pr: PersonalRecord = {
               exerciseName: ex.exerciseName,
               prType: 'weight',
-              value: s.weight,
-              weight: s.weight,
-              reps: s.reps,
+              value: w,
+              weight: w,
+              reps: r,
               achievedAt: workout.completedAt,
             };
             rec.weightPR = pr;
@@ -84,13 +84,13 @@ export const usePRStore = create<PRState>((set, get) => ({
             total++;
           }
 
-          if (!rec.repsPR || s.reps > rec.repsPR.value) {
+          if (!rec.repsPR || r > rec.repsPR.value) {
             const pr: PersonalRecord = {
               exerciseName: ex.exerciseName,
               prType: 'reps',
-              value: s.reps,
-              weight: s.weight,
-              reps: s.reps,
+              value: r,
+              weight: w,
+              reps: r,
               achievedAt: workout.completedAt,
             };
             rec.repsPR = pr;
@@ -98,13 +98,13 @@ export const usePRStore = create<PRState>((set, get) => ({
             total++;
           }
 
-          if (!rec.volumePR || vol > rec.volumePR.value) {
+          if (vol > 0 && (!rec.volumePR || vol > rec.volumePR.value)) {
             const pr: PersonalRecord = {
               exerciseName: ex.exerciseName,
               prType: 'volume',
               value: vol,
-              weight: s.weight,
-              reps: s.reps,
+              weight: w,
+              reps: r,
               achievedAt: workout.completedAt,
             };
             rec.volumePR = pr;
