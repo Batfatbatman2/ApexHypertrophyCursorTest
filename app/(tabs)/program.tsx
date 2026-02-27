@@ -1,10 +1,12 @@
-import { ScrollView, Text, View, Pressable, StyleSheet } from 'react-native';
+import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { router } from 'expo-router';
 
 import { Colors } from '@/constants/Colors';
-import { Button, Card, Badge, SectionHeader } from '@/components/ui';
+import { Button, Card, SectionHeader } from '@/components/ui';
+import { ProgramCard } from '@/components/program/ProgramCard';
 import { haptics } from '@/lib/haptics';
+import { useProgramStore } from '@/stores/program-store';
 
 const SCHEDULE_DAYS = [
   { label: 'MON', date: '3', workout: 'Push' },
@@ -17,6 +19,13 @@ const SCHEDULE_DAYS = [
 ];
 
 export default function ProgramScreen() {
+  const { programs, removeProgram, setActive } = useProgramStore();
+
+  const handleCreate = () => {
+    haptics.light();
+    router.push('/program/create');
+  };
+
   return (
     <SafeAreaView style={s.safe}>
       <ScrollView
@@ -48,91 +57,34 @@ export default function ProgramScreen() {
         {/* ── My Programs ────────────────────────────── */}
         <SectionHeader title="My Programs" />
 
-        {/* Active Program */}
-        <Card variant="highlighted" style={s.programCard}>
-          <View style={s.programHeader}>
-            <Text style={s.programName}>Push</Text>
-            <Badge label="ACTIVE" variant="error" />
-          </View>
+        {programs.length === 0 ? (
+          <Card padding={24} style={s.emptyCard}>
+            <Text style={s.emptyText}>No programs yet. Create your first one!</Text>
+          </Card>
+        ) : (
+          programs.map((p) => (
+            <ProgramCard
+              key={p.id}
+              program={p}
+              onSetActive={() => {
+                haptics.medium();
+                setActive(p.id);
+              }}
+              onDelete={() => {
+                haptics.warning();
+                removeProgram(p.id);
+              }}
+            />
+          ))
+        )}
 
-          <Text style={s.programDesc}>Peas and stuff</Text>
-
-          <View style={s.programStats}>
-            <View style={s.programStat}>
-              <FontAwesome name="list" size={12} color={Colors.textTertiary} />
-              <Text style={s.programStatText}>2 workouts</Text>
-            </View>
-            <View style={s.programStat}>
-              <FontAwesome name="bolt" size={12} color={Colors.textTertiary} />
-              <Text style={s.programStatText}>10 exercises</Text>
-            </View>
-          </View>
-
-          <Badge label="HYPERTROPHY" variant="accent" size="md" />
-
-          <Text style={s.scheduleLabel}>ROLLING SCHEDULE</Text>
-          <View style={s.pillRow}>
-            {['1. Push', '2. Legs'].map((day) => (
-              <View key={day} style={s.pill}>
-                <Text style={s.pillText}>{day}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={s.actionRow}>
-            <Pressable onPress={() => haptics.light()} style={s.actionBtn}>
-              <FontAwesome name="pencil" size={13} color={Colors.textSecondary} />
-              <Text style={s.actionBtnText}>Edit</Text>
-            </Pressable>
-            <Pressable onPress={() => haptics.light()} style={s.actionBtn}>
-              <FontAwesome name="trash-o" size={13} color={Colors.error} />
-              <Text style={[s.actionBtnText, { color: Colors.error }]}>Delete</Text>
-            </Pressable>
-          </View>
-        </Card>
-
-        {/* Inactive Program Placeholder */}
-        <Card style={s.programCard}>
-          <View style={s.programHeader}>
-            <Text style={s.programName}>T</Text>
-          </View>
-          <View style={s.programStats}>
-            <View style={s.programStat}>
-              <FontAwesome name="list" size={12} color={Colors.textTertiary} />
-              <Text style={s.programStatText}>1 workouts</Text>
-            </View>
-            <View style={s.programStat}>
-              <FontAwesome name="bolt" size={12} color={Colors.textTertiary} />
-              <Text style={s.programStatText}>0 exercises</Text>
-            </View>
-          </View>
-          <Badge label="HYPERTROPHY" variant="accent" size="md" />
-          <Text style={s.scheduleLabel}>ROLLING SCHEDULE</Text>
-          <View style={s.pillRow}>
-            <View style={s.pillRest}>
-              <FontAwesome name="moon-o" size={11} color={Colors.textSecondary} />
-              <Text style={s.pillText}>Rest</Text>
-            </View>
-          </View>
-          <View style={s.actionRow}>
-            <Button title="Set Active" variant="primary" size="sm" />
-            <Pressable onPress={() => haptics.light()} style={s.actionBtn}>
-              <FontAwesome name="pencil" size={13} color={Colors.textSecondary} />
-              <Text style={s.actionBtnText}>Edit</Text>
-            </Pressable>
-            <Pressable onPress={() => haptics.light()} style={s.actionBtn}>
-              <FontAwesome name="trash-o" size={13} color={Colors.error} />
-              <Text style={[s.actionBtnText, { color: Colors.error }]}>Delete</Text>
-            </Pressable>
-          </View>
-        </Card>
-
-        {/* Create New */}
+        {/* ── Create New ─────────────────────────────── */}
         <Button
           title="+ Create New Program"
           variant="secondary"
           size="md"
           fullWidth
+          onPress={handleCreate}
           style={s.createBtn}
         />
       </ScrollView>
@@ -170,57 +122,10 @@ const s = StyleSheet.create({
   dayCircleActive: { backgroundColor: Colors.accent },
   dayDate: { color: Colors.textSecondary, fontSize: 13, fontWeight: '700' },
   dayDateActive: { color: '#FFFFFF' },
-  dayDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: Colors.accent,
-  },
+  dayDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.accent },
 
-  programCard: { marginBottom: 16 },
-  programHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
-  },
-  programName: { color: Colors.textPrimary, fontSize: 22, fontWeight: '800' },
-  programDesc: { color: Colors.textSecondary, fontSize: 14, marginBottom: 14 },
-
-  programStats: { flexDirection: 'row', gap: 20, marginBottom: 14 },
-  programStat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  programStatText: { color: Colors.textSecondary, fontSize: 13 },
-
-  scheduleLabel: {
-    color: Colors.textTertiary,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 14,
-    marginBottom: 8,
-  },
-  pillRow: { flexDirection: 'row', gap: 8, marginBottom: 18 },
-  pill: {
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  pillRest: {
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pillText: { color: Colors.textPrimary, fontSize: 12, fontWeight: '600' },
-
-  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 },
-  actionBtnText: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600' },
+  emptyCard: { marginBottom: 16 },
+  emptyText: { color: Colors.textTertiary, fontSize: 14, textAlign: 'center' },
 
   createBtn: { marginTop: 4, borderRadius: 16 },
 });

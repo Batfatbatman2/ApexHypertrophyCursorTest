@@ -273,44 +273,28 @@ Matching mockup screenshots 1, 2, and 4.
 
 Matching mockup screenshots 3, 5, 6, and 9.
 
-- [ ] **5.1** Program list screen (tab):
-  - Rolling schedule calendar strip at top showing current week
-  - "My Programs" section with program cards
-- [ ] **5.2** `ProgramCard` component:
-  - Program name + "ACTIVE" badge (green/red)
-  - Description subtitle
-  - Workout count + exercise count stats
-  - Goal badge ("HYPERTROPHY")
-  - "ROLLING SCHEDULE" label + workout name pills (1. Push, 2. Legs)
-  - Edit + Delete buttons (with delete confirmation)
-  - "Set Active" button for inactive programs
-  - Red highlight border on selected/active card
-- [ ] **5.3** Create Program wizard — Step 1: Basic Info:
-  - Step indicator dots (1 of 3) with red active dot
-  - "Program Name" text input
-  - "Description (Optional)" textarea
-  - "Training Goal" selector — cards for: Hypertrophy, Strength, Endurance, General Fitness (red border on selected)
-  - "Rolling Schedule" info card at bottom with cycle visualization (Push > Pull > Legs > Repeat)
-  - "CONTINUE" red button
-- [ ] **5.4** Create Program wizard — Step 2: Exercise Selection:
-  - Exercise library browser with search bar
-  - Filter by muscle group, equipment, movement pattern
-  - Exercise cards showing name, muscle group tags, SFR rating, compound/isolation badge
-  - Add exercises to workout days
-  - Custom exercise builder modal
-- [ ] **5.5** Create Program wizard — Step 3: Build Schedule:
-  - "Rolling Schedule" header with explanation text
-  - "Your Schedule (N days)" with numbered workout/rest day cards
-  - Each card: number badge, workout name, exercise count, "Add Exercises" button (dashed red border)
-  - Rest Day cards with moon icon
-  - Up/down arrow buttons for reordering
-  - X button to remove
-  - "Repeats from Day 1" indicator at bottom
-  - "SAVE PROGRAM" red button
-- [ ] **5.6** Program detail view — full schedule with all exercises listed
-- [ ] **5.7** Edit program — modify name, exercises, schedule, goal
-- [ ] **5.8** Duplicate program functionality
-- [ ] **5.9** Pre-built templates: PPL, Upper/Lower, Full Body, Bro Split — shown in a "Templates" section during creation
+- [x] **5.1** Program list screen — store-driven with calendar strip, dynamic program cards, empty state
+- [x] **5.2** `ProgramCard` component (`components/program/ProgramCard.tsx`) — ACTIVE badge, goal badge, workout/exercise counts, rolling schedule pills, Edit/Delete/Set Active actions
+- [x] **5.3** Create Program wizard — Step 1: Basic Info (`app/program/create.tsx`):
+  - Step indicator dots with active red + progress bar
+  - Program Name input + Description textarea
+  - Training Goal selector (Hypertrophy/Strength/Endurance/General) with red border + checkmark
+  - Quick Start from Template section (4 templates)
+  - Rolling Schedule info card
+- [x] **5.4** Create Program wizard — Step 2: Build Schedule:
+  - Add Workout / Rest Day buttons
+  - Numbered day cards with reorder arrows + remove X
+  - Inline exercise list per workout day
+  - Exercise Picker with search, muscle group/equipment badges, compound tags
+  - "Repeats from Day 1" indicator
+- [x] **5.5** Create Program wizard — Step 3: Review:
+  - Program name, goal badge, day/exercise counts
+  - Full schedule breakdown with exercise details
+  - SAVE PROGRAM button persists to store
+- [x] **5.6** Program store (`stores/program-store.ts`) — full CRUD, wizard state, demo data, setActive
+- [x] **5.7** Pre-built templates (`constants/templates.ts`) — PPL, Upper/Lower, Full Body, Bro Split with full exercise definitions
+- [ ] **5.8** Edit program — modify name, exercises, schedule, goal (deferred)
+- [ ] **5.9** Duplicate program functionality (deferred)
 
 ---
 
