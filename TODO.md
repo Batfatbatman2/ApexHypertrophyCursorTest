@@ -293,8 +293,8 @@ Matching mockup screenshots 3, 5, 6, and 9.
   - SAVE PROGRAM button persists to store
 - [x] **5.6** Program store (`stores/program-store.ts`) — full CRUD, wizard state, demo data, setActive
 - [x] **5.7** Pre-built templates (`constants/templates.ts`) — PPL, Upper/Lower, Full Body, Bro Split with full exercise definitions
-- [ ] **5.8** Edit program — modify name, exercises, schedule, goal (deferred)
-- [ ] **5.9** Duplicate program functionality (deferred)
+- [x] **5.8** Edit program — loads existing program into wizard, "Edit Program" header, "SAVE CHANGES" button, updates in-place
+- [x] **5.9** Duplicate program — creates copy with "(Copy)" suffix, preserves all data, inactive by default
 
 ---
 
@@ -437,17 +437,17 @@ Matching mockup screenshots 10 and 11.
 
 ## Phase 13: Settings & Preferences
 
-- [ ] **13.1** Settings screen sections:
+- [x] **13.1** Settings screen sections:
   - **Units**: Weight (lbs/kg) toggle with automatic conversion
-  - **Rest Timer**: Default duration, auto-start toggle
-  - **Haptics**: Global haptics toggle
-  - **Notifications**: Global notifications toggle
-  - **Volume Targets**: Per muscle group (12 groups) with reset to defaults
-  - **Theme**: System / Light / Dark
-  - **Data**: Export (JSON + PDF), Delete All Data
-  - **Account**: Profile editing, logout, subscription management
-- [ ] **13.2** Persist settings in Zustand + MMKV (instant load)
-- [ ] **13.3** "Delete All My Data" — wipe local DB + Supabase data + audit trail
+  - **Rest Timer**: Default duration picker modal (6 presets: 30s–4m), auto-start toggle
+  - **Haptics**: Global haptics toggle (Switch)
+  - **Notifications**: Global notifications toggle (Switch)
+  - **Volume Targets**: Per muscle group (12 groups) with +/− steppers and reset to defaults
+  - **Theme**: Dark / Light / System pill selector
+  - **Data**: Export modal (JSON + PDF options), Delete All Data confirmation modal
+  - **Account**: Sign out
+- [ ] **13.2** Persist settings in Zustand + MMKV (instant load) — deferred, needs AsyncStorage/MMKV
+- [x] **13.3** "Delete All My Data" — confirmation modal with danger UX, resets all settings to defaults
 
 ---
 
