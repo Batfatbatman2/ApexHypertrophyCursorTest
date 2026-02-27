@@ -6,11 +6,13 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { router } from 'expo-router';
 
 import { Colors } from '@/constants/Colors';
+import { Card } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
 import { useProgramStore } from '@/stores/program-store';
 import { useWorkoutStore, buildSetsForExercise } from '@/stores/workout-store';
 import { useHistoryStore } from '@/stores/history-store';
 import { usePRStore } from '@/stores/pr-store';
+import { useReadinessStore } from '@/stores/readiness-store';
 import {
   HeroWorkoutCard,
   WeeklyVolumeRings,
@@ -18,6 +20,7 @@ import {
   RecentWorkouts,
   StatsRow,
 } from '@/components/home';
+import { ReadinessSurvey } from '@/components/home/ReadinessSurvey';
 import type {
   HeroWorkoutData,
   VolumeData,
@@ -107,6 +110,7 @@ const MOCK_EXERCISES = [
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isRestDay, setIsRestDay] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
   const { getActiveProgram } = useProgramStore();
   const { startWorkout } = useWorkoutStore();
   const workoutCount = useHistoryStore((s) => s.workouts.length);
@@ -114,12 +118,31 @@ export default function HomeScreen() {
     s.workouts.reduce((sum, w) => sum + w.totalSetsCompleted, 0),
   );
   const totalPRs = usePRStore((s) => s.totalPRCount);
+  const todayEntry = useReadinessStore((s) => s.getTodayEntry());
+  const getScore = useReadinessStore((s) => s.getScore);
 
   const liveStats: StatItem[] = [
     { value: String(workoutCount), label: 'Workouts' },
     { value: String(totalSets), label: 'Total Sets' },
     { value: String(totalPRs), label: 'PRs Set' },
   ];
+
+  const history = useHistoryStore((s) => s.workouts);
+
+  const getGhostData = useCallback(
+    (exerciseName: string) => {
+      for (const workout of history) {
+        const ex = workout.exercises.find((e) => e.exerciseName === exerciseName);
+        if (ex && ex.sets.length > 0 && ex.sets.some((st) => st.isCompleted)) {
+          return ex.sets
+            .filter((st) => st.isCompleted)
+            .map((st) => ({ weight: st.weight, reps: st.reps }));
+        }
+      }
+      return undefined;
+    },
+    [history],
+  );
 
   const handleStartWorkout = useCallback(() => {
     haptics.medium();
@@ -131,7 +154,7 @@ export default function HomeScreen() {
           exerciseName: ex.exerciseName,
           muscleGroups: ex.muscleGroups,
           equipment: ex.equipment,
-          sets: buildSetsForExercise(ex.sets, ex.reps),
+          sets: buildSetsForExercise(ex.sets, ex.reps, getGhostData(ex.exerciseName)),
         }));
         startWorkout(firstWorkoutDay.name, exercises);
         router.push('/workout/active');
@@ -140,7 +163,7 @@ export default function HomeScreen() {
     }
     startWorkout('Push', MOCK_EXERCISES);
     router.push('/workout/active');
-  }, [getActiveProgram, startWorkout]);
+  }, [getActiveProgram, startWorkout, getGhostData]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -187,6 +210,55 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
+        {/* ── Readiness Check-in ────────────────────── */}
+        {todayEntry ? (
+          <Card padding={14} style={s.readinessCard}>
+            <View style={s.readinessRow}>
+              <View
+                style={[
+                  s.readinessDot,
+                  {
+                    backgroundColor:
+                      getScore(todayEntry) >= 70
+                        ? '#22C55E'
+                        : getScore(todayEntry) >= 40
+                          ? '#F59E0B'
+                          : '#EF4444',
+                  },
+                ]}
+              />
+              <Text style={s.readinessLabel}>Readiness</Text>
+              <Text
+                style={[
+                  s.readinessScore,
+                  {
+                    color:
+                      getScore(todayEntry) >= 70
+                        ? '#22C55E'
+                        : getScore(todayEntry) >= 40
+                          ? '#F59E0B'
+                          : '#EF4444',
+                  },
+                ]}
+              >
+                {getScore(todayEntry)}%
+              </Text>
+            </View>
+          </Card>
+        ) : (
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              setShowSurvey(true);
+            }}
+            style={s.checkinBtn}
+          >
+            <FontAwesome name="plus-circle" size={16} color={Colors.accent} />
+            <Text style={s.checkinBtnText}>Daily Check-in</Text>
+            <Text style={s.checkinBtnSub}>Log your readiness</Text>
+          </Pressable>
+        )}
+
         {/* ── Hero ───────────────────────────────────── */}
         <HeroWorkoutCard
           workout={MOCK_WORKOUT}
@@ -206,6 +278,8 @@ export default function HomeScreen() {
         {/* ── Stats ──────────────────────────────────── */}
         <StatsRow stats={liveStats} />
       </ScrollView>
+
+      <ReadinessSurvey visible={showSurvey} onClose={() => setShowSurvey(false)} />
     </SafeAreaView>
   );
 }
@@ -235,4 +309,24 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 14,
   },
+
+  readinessCard: { marginBottom: 16 },
+  readinessRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  readinessDot: { width: 10, height: 10, borderRadius: 5 },
+  readinessLabel: { color: Colors.textSecondary, fontSize: 14, fontWeight: '600', flex: 1 },
+  readinessScore: { fontSize: 18, fontWeight: '800' },
+
+  checkinBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.accent + '0A',
+    borderWidth: 1,
+    borderColor: Colors.accent + '30',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  checkinBtnText: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600', flex: 1 },
+  checkinBtnSub: { color: Colors.textTertiary, fontSize: 12 },
 });

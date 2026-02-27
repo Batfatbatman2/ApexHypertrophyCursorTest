@@ -479,6 +479,11 @@ function SetRow({
             <Text style={$.prevW}>{set.weight}</Text>
             <Text style={$.prevR}>× {set.reps}</Text>
           </>
+        ) : set.ghostWeight ? (
+          <>
+            <Text style={$.prevW}>{set.ghostWeight}</Text>
+            <Text style={$.prevR}>× {set.ghostReps}</Text>
+          </>
         ) : (
           <Text style={$.prevDash}>—</Text>
         )}
