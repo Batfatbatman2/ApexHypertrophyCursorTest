@@ -256,29 +256,16 @@ Define all local database models matching the feature spec.
 
 Matching mockup screenshots 1, 2, and 4.
 
-- [ ] **4.1** Root tab layout with Home as default tab
-- [ ] **4.2** Greeting header — "Good evening" (time-based) + date + "Apex Hypertrophy" bold title
-- [ ] **4.3** `HeroWorkoutCard` — shows next scheduled workout from active program:
-  - "UP NEXT · PUSH" label
-  - Workout name (large bold)
-  - Exercise count + estimated duration
-  - Red "START WORKOUT" button
-  - **Rest Day variant**: moon icon, "Take time to recover" subtitle, gray "REST DAY" button
-- [ ] **4.4** `WeeklyVolumeRings` — horizontal row of `ProgressRing` components:
-  - Query completed sets this week per muscle group
-  - Show `current/target` inside each ring (e.g., "0/18")
-  - Muscle group label below (BACK, CHEST, QUADS, SHOULDERS)
-  - "See All" link to full muscle breakdown
-- [ ] **4.5** `ComingUpScroll` — horizontal ScrollView of upcoming workout cards:
-  - "TOMORROW" / day name label (red text)
-  - Workout name (bold)
-  - Exercise count + estimated duration
-- [ ] **4.6** `RecentWorkouts` section:
-  - Workout name, date, duration, set count
-  - Chevron to detail view
-  - "See All" link
-- [ ] **4.7** Bottom stats row: Workouts count, Total Sets, PRs Set (large red numbers)
-- [ ] **4.8** Pull-to-refresh to re-query data
+- [x] **4.1** Root tab layout with Home as default tab (done in Phase 0)
+- [x] **4.2** Greeting header — time-based greeting + formatted date + "Apex Hypertrophy" title + workout/rest toggle button
+- [x] **4.3** `HeroWorkoutCard` (`components/home/HeroWorkoutCard.tsx`) — two variants:
+  - **Workout**: "UP NEXT · PUSH" label, workout name, exercise count, duration, red "START WORKOUT" button
+  - **Rest Day**: moon icon, "Take time to recover", gray "REST DAY" button
+- [x] **4.4** `WeeklyVolumeRings` (`components/home/WeeklyVolumeRings.tsx`) — SectionHeader + Card + row of SVG ProgressRings with labels
+- [x] **4.5** `ComingUpScroll` (`components/home/ComingUpScroll.tsx`) — horizontal ScrollView with day labels, workout names, exercise counts
+- [x] **4.6** `RecentWorkouts` (`components/home/RecentWorkouts.tsx`) — pressable cards with chevron, empty state, "See All" link
+- [x] **4.7** `StatsRow` (`components/home/StatsRow.tsx`) — bottom stats with dividers (Workouts, Total Sets, PRs Set)
+- [x] **4.8** Pull-to-refresh with RefreshControl (accent-colored spinner)
 
 ---
 
