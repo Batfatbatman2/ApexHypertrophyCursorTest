@@ -49,6 +49,13 @@ export default function WorkoutScreen() {
     router.back();
   }, [store]);
 
+  const handleFinishWorkout = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    haptics.success();
+    store.endWorkout();
+    router.replace('/workout/summary/completed');
+  }, [store]);
+
   const handleCompleteSet = useCallback(
     (setId: string) => {
       const st = exercise?.sets.find((x) => x.id === setId);
@@ -189,6 +196,17 @@ export default function WorkoutScreen() {
             </View>
           </Card>
         )}
+
+        {/* Finish Workout */}
+        <View style={s.finishRow}>
+          <Button
+            title="FINISH WORKOUT"
+            variant="primary"
+            size="lg"
+            fullWidth
+            onPress={handleFinishWorkout}
+          />
+        </View>
       </ScrollView>
 
       {/* ── Footer ───────────────────────────────── */}
@@ -474,6 +492,8 @@ const s = StyleSheet.create({
   upNextName: { color: Colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 8 },
   upNextTags: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   upNextSets: { color: Colors.textSecondary, fontSize: 12 },
+
+  finishRow: { marginTop: 16, marginBottom: 8 },
 
   footer: {
     flexDirection: 'row',

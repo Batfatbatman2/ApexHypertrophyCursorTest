@@ -80,6 +80,10 @@ export default function RootLayout() {
           name="workout/[id]"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen
+          name="workout/summary/[id]"
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
       </Stack>
       <StatusBar style="light" />
     </ThemeProvider>
