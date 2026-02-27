@@ -41,7 +41,6 @@ export default function WorkoutScreen() {
   }>({ visible: false, exerciseName: '', types: [] });
   const restTimer = useTimerStore();
   const { defaultRestDuration, autoStartTimer } = useSettingsStore();
-  const checkForPR = usePRStore((s) => s.checkForPR);
 
   useEffect(() => {
     if (status === 'active') {
@@ -111,18 +110,20 @@ export default function WorkoutScreen() {
 
   const handleCompleteSet = useCallback(
     (setId: string) => {
-      const st = exercise?.sets.find((x) => x.id === setId);
+      const freshState = useWorkoutStore.getState();
+      const ex = freshState.exercises[freshState.currentExerciseIndex];
+      const st = ex?.sets.find((x) => x.id === setId);
       if (!st) return;
       if (st.weight <= 0 && st.reps <= 0) {
         haptics.warning();
         return;
       }
       haptics.success();
-      store.completeSet(currentExerciseIndex, setId);
+      freshState.completeSet(freshState.currentExerciseIndex, setId);
 
-      const prResult = checkForPR(exercise.exerciseName, st.weight, st.reps);
+      const prResult = usePRStore.getState().checkForPR(ex.exerciseName, st.weight, st.reps);
       if (prResult.isNewPR) {
-        setPrToast({ visible: true, exerciseName: exercise.exerciseName, types: prResult.types });
+        setPrToast({ visible: true, exerciseName: ex.exerciseName, types: prResult.types });
       }
 
       if (autoStartTimer) {
@@ -130,15 +131,7 @@ export default function WorkoutScreen() {
         setShowRestTimer(true);
       }
     },
-    [
-      exercise,
-      currentExerciseIndex,
-      store,
-      autoStartTimer,
-      defaultRestDuration,
-      restTimer,
-      checkForPR,
-    ],
+    [autoStartTimer, defaultRestDuration, restTimer],
   );
 
   const handleRpeSubmit = useCallback(
