@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -9,10 +9,12 @@ import { SET_TYPES, type SetType } from '@/constants/set-types';
 import { Button, Card, Badge, BottomSheetModal } from '@/components/ui';
 import { RPEModal } from '@/components/workout/RPEModal';
 import { RestTimer } from '@/components/workout/RestTimer';
+import { PRToast } from '@/components/workout/PRToast';
 import { haptics } from '@/lib/haptics';
 import { useWorkoutStore, type ActiveSet } from '@/stores/workout-store';
 import { useTimerStore } from '@/stores/timer-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { usePRStore, type PRType } from '@/stores/pr-store';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -20,14 +22,23 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+type FooterAction = 'complete' | 'next' | 'finish';
+
 export default function WorkoutScreen() {
   const store = useWorkoutStore();
   const { status, workoutName, exercises, currentExerciseIndex, elapsedSeconds } = store;
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [pickerSetId, setPickerSetId] = useState<string | null>(null);
-  const [rpeSetId, setRpeSetId] = useState<string | null>(null);
+  const [showRpe, setShowRpe] = useState(false);
+  const [rpeExerciseIndex, setRpeExerciseIndex] = useState<number | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [pendingNav, setPendingNav] = useState<'next' | 'prev' | 'finish' | null>(null);
+  const [prToast, setPrToast] = useState<{
+    visible: boolean;
+    exerciseName: string;
+    types: PRType[];
+  }>({ visible: false, exerciseName: '', types: [] });
   const restTimer = useTimerStore();
   const { defaultRestDuration, autoStartTimer } = useSettingsStore();
 
@@ -42,6 +53,25 @@ export default function WorkoutScreen() {
 
   const exercise = exercises[currentExerciseIndex];
   const nextExercise = exercises[currentExerciseIndex + 1];
+  const isLastExercise = currentExerciseIndex === exercises.length - 1;
+
+  const footerAction: FooterAction = useMemo(() => {
+    if (!exercise) return 'complete';
+    const allDone = exercise.sets.every((st) => st.isCompleted);
+    if (!allDone) return 'complete';
+    if (isLastExercise) return 'finish';
+    return 'next';
+  }, [exercise, isLastExercise]);
+
+  const hasCompletedSets = useCallback(
+    (exIndex: number) => exercises[exIndex]?.sets.some((s) => s.isCompleted) ?? false,
+    [exercises],
+  );
+
+  const completedSetsCount = useCallback(
+    (exIndex: number) => exercises[exIndex]?.sets.filter((s) => s.isCompleted).length ?? 0,
+    [exercises],
+  );
 
   const handleClose = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -49,55 +79,110 @@ export default function WorkoutScreen() {
     router.back();
   }, [store]);
 
+  const performNavigation = useCallback(
+    (nav: 'next' | 'prev' | 'finish') => {
+      if (nav === 'next') {
+        store.nextExercise();
+      } else if (nav === 'prev') {
+        store.prevExercise();
+      } else if (nav === 'finish') {
+        if (timerRef.current) clearInterval(timerRef.current);
+        haptics.success();
+        store.endWorkout();
+        router.replace('/workout/summary/completed');
+      }
+    },
+    [store],
+  );
+
+  const maybeShowRpeThenNavigate = useCallback(
+    (nav: 'next' | 'prev' | 'finish') => {
+      if (hasCompletedSets(currentExerciseIndex)) {
+        setPendingNav(nav);
+        setRpeExerciseIndex(currentExerciseIndex);
+        setShowRpe(true);
+      } else {
+        performNavigation(nav);
+      }
+    },
+    [currentExerciseIndex, hasCompletedSets, performNavigation],
+  );
+
   const handleCompleteSet = useCallback(
     (setId: string) => {
-      const st = exercise?.sets.find((x) => x.id === setId);
+      const freshState = useWorkoutStore.getState();
+      const ex = freshState.exercises[freshState.currentExerciseIndex];
+      const st = ex?.sets.find((x) => x.id === setId);
       if (!st) return;
       if (st.weight <= 0 && st.reps <= 0) {
         haptics.warning();
         return;
       }
       haptics.success();
-      store.completeSet(currentExerciseIndex, setId);
-      setRpeSetId(setId);
-    },
-    [exercise, currentExerciseIndex, store],
-  );
+      freshState.completeSet(freshState.currentExerciseIndex, setId);
 
-  const startRestTimerIfEnabled = useCallback(() => {
-    if (autoStartTimer) {
-      restTimer.start(defaultRestDuration);
-      setShowRestTimer(true);
-    }
-  }, [autoStartTimer, defaultRestDuration, restTimer]);
+      const prResult = usePRStore.getState().checkForPR(ex.exerciseName, st.weight, st.reps);
+      if (prResult.isNewPR) {
+        setPrToast({ visible: true, exerciseName: ex.exerciseName, types: prResult.types });
+      }
+
+      if (autoStartTimer) {
+        restTimer.start(defaultRestDuration);
+        setShowRestTimer(true);
+      }
+    },
+    [autoStartTimer, defaultRestDuration, restTimer],
+  );
 
   const handleRpeSubmit = useCallback(
     (rpe: number, muscleConnection: number, _notes: string) => {
-      if (rpeSetId) {
-        store.updateSet(currentExerciseIndex, rpeSetId, { rpe, muscleConnection });
+      if (rpeExerciseIndex !== null) {
+        const ex = exercises[rpeExerciseIndex];
+        ex.sets
+          .filter((st) => st.isCompleted)
+          .forEach((st) => {
+            store.updateSet(rpeExerciseIndex, st.id, { rpe, muscleConnection });
+          });
       }
-      setRpeSetId(null);
-      startRestTimerIfEnabled();
+      setShowRpe(false);
+      setRpeExerciseIndex(null);
+      if (pendingNav) {
+        performNavigation(pendingNav);
+        setPendingNav(null);
+      }
     },
-    [rpeSetId, currentExerciseIndex, store, startRestTimerIfEnabled],
+    [rpeExerciseIndex, exercises, store, pendingNav, performNavigation],
   );
 
   const handleRpeSkip = useCallback(() => {
-    setRpeSetId(null);
-    startRestTimerIfEnabled();
-  }, [startRestTimerIfEnabled]);
+    setShowRpe(false);
+    setRpeExerciseIndex(null);
+    if (pendingNav) {
+      performNavigation(pendingNav);
+      setPendingNav(null);
+    }
+  }, [pendingNav, performNavigation]);
 
   const handleRestComplete = useCallback(() => {
     setShowRestTimer(false);
   }, []);
 
-  const handleCompleteFirstIncomplete = useCallback(() => {
-    if (!exercise) return;
-    const incomplete = exercise.sets.find((s) => !s.isCompleted);
-    if (incomplete) {
-      handleCompleteSet(incomplete.id);
+  const handleFooterPress = useCallback(() => {
+    if (footerAction === 'complete') {
+      if (!exercise) return;
+      const incomplete = exercise.sets.find((st) => !st.isCompleted);
+      if (incomplete) handleCompleteSet(incomplete.id);
+    } else if (footerAction === 'next') {
+      haptics.light();
+      maybeShowRpeThenNavigate('next');
+    } else {
+      maybeShowRpeThenNavigate('finish');
     }
-  }, [exercise, handleCompleteSet]);
+  }, [footerAction, exercise, handleCompleteSet, maybeShowRpeThenNavigate]);
+
+  const handleDismissPrToast = useCallback(() => {
+    setPrToast({ visible: false, exerciseName: '', types: [] });
+  }, []);
 
   if (status !== 'active' || !exercise) {
     return (
@@ -110,169 +195,179 @@ export default function WorkoutScreen() {
     );
   }
 
+  const footerLabel =
+    footerAction === 'finish'
+      ? 'FINISH WORKOUT'
+      : footerAction === 'next'
+        ? 'NEXT EXERCISE'
+        : 'MARK SET COMPLETE';
+
   return (
-    <SafeAreaView style={s.safe}>
-      {/* ── Header ───────────────────────────────── */}
-      <View style={s.header}>
-        <Pressable onPress={handleClose} hitSlop={12}>
-          <FontAwesome name="close" size={20} color={Colors.textSecondary} />
-        </Pressable>
-        <View style={s.headerCenter}>
-          <Text style={s.headerTitle}>{workoutName}</Text>
-          <Text style={s.headerTimer}>⏱ {formatTime(elapsedSeconds)}</Text>
-        </View>
-        <Text style={s.headerCounter}>
-          {currentExerciseIndex + 1}/{exercises.length}
-        </Text>
-      </View>
-
-      {/* ── Body ─────────────────────────────────── */}
-      <ScrollView
-        style={s.body}
-        contentContainerStyle={s.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Exercise Header */}
-        <Text style={s.exerciseName}>{exercise.exerciseName}</Text>
-        <View style={s.tagRow}>
-          {exercise.muscleGroups.slice(0, 2).map((m) => (
-            <Badge key={m} label={m} variant="accent" />
-          ))}
-          <Badge label={exercise.equipment} variant="muted" />
-        </View>
-
-        {/* Set Table Header */}
-        <View style={s.tableHeader}>
-          <Text style={[s.colHeader, s.colSet]}>SET</Text>
-          <Text style={[s.colHeader, s.colPrev]}>PREVIOUS</Text>
-          <Text style={[s.colHeader, s.colWeight]}>WEIGHT</Text>
-          <Text style={[s.colHeader, s.colReps]}>REPS</Text>
-          <View style={s.colCheck} />
-        </View>
-
-        {/* Set Rows */}
-        {exercise.sets.map((set) => (
-          <SetRowComponent
-            key={set.id}
-            set={set}
-            exerciseIndex={currentExerciseIndex}
-            onTypeTap={() => setPickerSetId(set.id)}
-            onComplete={() => handleCompleteSet(set.id)}
-          />
-        ))}
-
-        {/* Add Set / Drop Set */}
-        <View style={s.addRow}>
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              store.addSet(currentExerciseIndex);
-            }}
-            style={s.addSetBtn}
-          >
-            <FontAwesome name="plus-circle" size={14} color={Colors.success} />
-            <Text style={s.addSetText}>Add Set</Text>
+    <View style={s.rootWrap}>
+      {/* ── PR Toast (rendered above SafeAreaView) ── */}
+      <PRToast
+        visible={prToast.visible}
+        exerciseName={prToast.exerciseName}
+        prTypes={prToast.types}
+        onDismiss={handleDismissPrToast}
+      />
+      <SafeAreaView style={s.safe}>
+        {/* ── Header ───────────────────────────────── */}
+        <View style={s.header}>
+          <Pressable onPress={handleClose} hitSlop={12}>
+            <FontAwesome name="close" size={20} color={Colors.textSecondary} />
           </Pressable>
+          <View style={s.headerCenter}>
+            <Text style={s.headerTitle}>{workoutName}</Text>
+            <Text style={s.headerTimer}>⏱ {formatTime(elapsedSeconds)}</Text>
+          </View>
+          <Text style={s.headerCounter}>
+            {currentExerciseIndex + 1}/{exercises.length}
+          </Text>
         </View>
 
-        {/* Up Next Preview */}
-        {nextExercise && (
-          <Card padding={16} style={s.upNextCard}>
-            <Text style={s.upNextLabel}>UP NEXT</Text>
-            <Text style={s.upNextName}>{nextExercise.exerciseName}</Text>
-            <View style={s.upNextTags}>
-              {nextExercise.muscleGroups.slice(0, 2).map((m) => (
-                <Badge key={m} label={m} variant="accent" />
-              ))}
-              <Badge label={nextExercise.equipment} variant="muted" />
-              <Text style={s.upNextSets}>{nextExercise.sets.length} sets</Text>
-            </View>
-          </Card>
-        )}
-      </ScrollView>
-
-      {/* ── Footer ───────────────────────────────── */}
-      <View style={s.footer}>
-        <Pressable
-          onPress={() => {
-            haptics.light();
-            store.prevExercise();
-          }}
-          style={s.navBtn}
-          disabled={currentExerciseIndex === 0}
+        {/* ── Body ─────────────────────────────────── */}
+        <ScrollView
+          style={s.body}
+          contentContainerStyle={s.bodyContent}
+          showsVerticalScrollIndicator={false}
         >
-          <FontAwesome
-            name="chevron-left"
-            size={20}
-            color={currentExerciseIndex === 0 ? Colors.surfaceBorder : Colors.textSecondary}
-          />
-        </Pressable>
+          {/* Exercise Header */}
+          <Text style={s.exerciseName}>{exercise.exerciseName}</Text>
+          <View style={s.tagRow}>
+            {exercise.muscleGroups.slice(0, 2).map((m) => (
+              <Badge key={m} label={m} variant="accent" />
+            ))}
+            <Badge label={exercise.equipment} variant="muted" />
+          </View>
 
-        <Button
-          title="MARK SET COMPLETE"
-          variant="primary"
-          size="lg"
-          onPress={handleCompleteFirstIncomplete}
-          style={s.completeBtn}
-        />
+          {/* Set Table Header */}
+          <View style={s.tableHeader}>
+            <Text style={[s.colHeader, s.colSet]}>SET</Text>
+            <Text style={[s.colHeader, s.colPrev]}>PREVIOUS</Text>
+            <Text style={[s.colHeader, s.colWeight]}>WEIGHT</Text>
+            <Text style={[s.colHeader, s.colReps]}>REPS</Text>
+            <View style={s.colCheck} />
+          </View>
 
-        <Pressable
-          onPress={() => {
-            haptics.light();
-            store.nextExercise();
-          }}
-          style={s.navBtn}
-          disabled={currentExerciseIndex === exercises.length - 1}
-        >
-          <FontAwesome
-            name="chevron-right"
-            size={20}
-            color={
-              currentExerciseIndex === exercises.length - 1
-                ? Colors.surfaceBorder
-                : Colors.textSecondary
+          {/* Set Rows */}
+          {exercise.sets.map((set) => (
+            <SetRowComponent
+              key={set.id}
+              set={set}
+              exerciseIndex={currentExerciseIndex}
+              onTypeTap={() => setPickerSetId(set.id)}
+              onComplete={() => handleCompleteSet(set.id)}
+            />
+          ))}
+
+          {/* Add Set */}
+          <View style={s.addRow}>
+            <Pressable
+              onPress={() => {
+                haptics.light();
+                store.addSet(currentExerciseIndex);
+              }}
+              style={s.addSetBtn}
+            >
+              <FontAwesome name="plus-circle" size={14} color={Colors.success} />
+              <Text style={s.addSetText}>Add Set</Text>
+            </Pressable>
+          </View>
+
+          {/* Up Next Preview */}
+          {nextExercise && (
+            <Card padding={16} style={s.upNextCard}>
+              <Text style={s.upNextLabel}>UP NEXT</Text>
+              <Text style={s.upNextName}>{nextExercise.exerciseName}</Text>
+              <View style={s.upNextTags}>
+                {nextExercise.muscleGroups.slice(0, 2).map((m) => (
+                  <Badge key={m} label={m} variant="accent" />
+                ))}
+                <Badge label={nextExercise.equipment} variant="muted" />
+                <Text style={s.upNextSets}>{nextExercise.sets.length} sets</Text>
+              </View>
+            </Card>
+          )}
+        </ScrollView>
+
+        {/* ── Rest Timer (compact bottom bar) ────── */}
+        <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
+
+        {/* ── Footer ───────────────────────────────── */}
+        <View style={s.footer}>
+          {/* Back nav — only when not on first exercise */}
+          {currentExerciseIndex > 0 && (
+            <Pressable
+              onPress={() => {
+                haptics.light();
+                maybeShowRpeThenNavigate('prev');
+              }}
+              style={s.navBtn}
+            >
+              <FontAwesome name="chevron-left" size={16} color={Colors.textSecondary} />
+            </Pressable>
+          )}
+
+          <Button
+            title={footerLabel}
+            variant={footerAction === 'finish' ? 'primary' : 'primary'}
+            size="lg"
+            onPress={handleFooterPress}
+            style={s.mainBtn}
+            icon={
+              footerAction === 'finish' ? (
+                <FontAwesome name="check" size={15} color="#FFF" />
+              ) : footerAction === 'next' ? (
+                <FontAwesome name="arrow-right" size={14} color="#FFF" />
+              ) : undefined
             }
           />
-        </Pressable>
-      </View>
+        </View>
 
-      {/* ── Set Type Picker ──────────────────────── */}
-      <BottomSheetModal visible={pickerSetId !== null} onClose={() => setPickerSetId(null)}>
-        <Text style={s.pickerTitle}>Set Type</Text>
-        {(Object.keys(SET_TYPES) as SetType[]).map((type) => {
-          const config = SET_TYPES[type];
-          const currentSet = exercise.sets.find((st) => st.id === pickerSetId);
-          const isSelected = currentSet?.setType === type;
-          return (
-            <Pressable
-              key={type}
-              onPress={() => {
-                haptics.selection();
-                if (pickerSetId) {
-                  store.changeSetType(currentExerciseIndex, pickerSetId, type);
-                }
-                setPickerSetId(null);
-              }}
-              style={[s.pickerRow, isSelected && s.pickerRowSelected]}
-            >
-              <View style={[s.pickerIcon, { backgroundColor: config.color + '22' }]}>
-                <Text style={{ fontSize: 18 }}>{config.icon}</Text>
-              </View>
-              <Text style={[s.pickerLabel, isSelected && { color: config.color }]}>
-                {config.label}
-              </Text>
-              {isSelected && <FontAwesome name="check" size={16} color={config.color} />}
-            </Pressable>
-          );
-        })}
-      </BottomSheetModal>
+        {/* ── Set Type Picker ──────────────────────── */}
+        <BottomSheetModal visible={pickerSetId !== null} onClose={() => setPickerSetId(null)}>
+          <Text style={s.pickerTitle}>Set Type</Text>
+          {(Object.keys(SET_TYPES) as SetType[]).map((type) => {
+            const config = SET_TYPES[type];
+            const currentSet = exercise.sets.find((st) => st.id === pickerSetId);
+            const isSelected = currentSet?.setType === type;
+            return (
+              <Pressable
+                key={type}
+                onPress={() => {
+                  haptics.selection();
+                  if (pickerSetId) {
+                    store.changeSetType(currentExerciseIndex, pickerSetId, type);
+                  }
+                  setPickerSetId(null);
+                }}
+                style={[s.pickerRow, isSelected && s.pickerRowSelected]}
+              >
+                <View style={[s.pickerIcon, { backgroundColor: config.color + '22' }]}>
+                  <Text style={{ fontSize: 18 }}>{config.icon}</Text>
+                </View>
+                <Text style={[s.pickerLabel, isSelected && { color: config.color }]}>
+                  {config.label}
+                </Text>
+                {isSelected && <FontAwesome name="check" size={16} color={config.color} />}
+              </Pressable>
+            );
+          })}
+        </BottomSheetModal>
 
-      {/* ── RPE Feedback Modal ───────────────────── */}
-      <RPEModal visible={rpeSetId !== null} onSubmit={handleRpeSubmit} onSkip={handleRpeSkip} />
-
-      {/* ── Rest Timer ───────────────────────────── */}
-      <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
-    </SafeAreaView>
+        {/* ── RPE Feedback Modal (exercise-level) ─── */}
+        <RPEModal
+          visible={showRpe}
+          exerciseName={
+            rpeExerciseIndex !== null ? (exercises[rpeExerciseIndex]?.exerciseName ?? '') : ''
+          }
+          completedSetsCount={rpeExerciseIndex !== null ? completedSetsCount(rpeExerciseIndex) : 0}
+          onSubmit={handleRpeSubmit}
+          onSkip={handleRpeSkip}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -359,6 +454,7 @@ function SetRowComponent({
    Styles
    ═══════════════════════════════════════════════════ */
 const s = StyleSheet.create({
+  rootWrap: { flex: 1, position: 'relative' },
   safe: { flex: 1, backgroundColor: Colors.background },
   emptyCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   emptyText: { color: Colors.textSecondary, fontSize: 16 },
@@ -388,8 +484,18 @@ const s = StyleSheet.create({
   },
   tagRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
 
-  tableHeader: { flexDirection: 'row', alignItems: 'center', paddingBottom: 10, marginBottom: 4 },
-  colHeader: { color: Colors.textTertiary, fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  tableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 10,
+    marginBottom: 4,
+  },
+  colHeader: {
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   colSet: { width: 48, alignItems: 'center' },
   colPrev: { width: 60, textAlign: 'center' },
   colWeight: { flex: 1, alignItems: 'center' },
@@ -453,7 +559,12 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  addRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, marginBottom: 24 },
+  addRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    marginBottom: 24,
+  },
   addSetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -471,7 +582,12 @@ const s = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 6,
   },
-  upNextName: { color: Colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 8 },
+  upNextName: {
+    color: Colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
   upNextTags: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   upNextSets: { color: Colors.textSecondary, fontSize: 12 },
 
@@ -482,10 +598,17 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 0.5,
     borderTopColor: Colors.divider,
-    gap: 8,
+    gap: 10,
   },
-  navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  completeBtn: { flex: 1 },
+  navBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: Colors.surfaceLight,
+  },
+  mainBtn: { flex: 1 },
 
   pickerTitle: {
     color: Colors.textPrimary,
@@ -511,5 +634,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickerLabel: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600', flex: 1 },
+  pickerLabel: {
+    color: Colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+  },
 });

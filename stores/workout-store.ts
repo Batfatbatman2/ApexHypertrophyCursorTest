@@ -22,6 +22,39 @@ export interface ActiveExercise {
   sets: ActiveSet[];
 }
 
+export interface ExerciseSummary {
+  exerciseName: string;
+  muscleGroups: string[];
+  equipment: string;
+  completedSets: number;
+  totalSets: number;
+  totalVolume: number;
+  topWeight: number;
+  topReps: number;
+  avgRpe: number | null;
+  sets: ActiveSet[];
+}
+
+export interface WorkoutSummaryData {
+  workoutName: string;
+  durationSeconds: number;
+  totalVolume: number;
+  totalSetsCompleted: number;
+  totalSetsPlanned: number;
+  averageRpe: number | null;
+  exercises: ExerciseSummary[];
+  completedAt: number;
+  prs: PRRecord[];
+}
+
+export interface PRRecord {
+  exerciseName: string;
+  prType: 'weight' | 'reps' | 'volume';
+  value: number;
+  weight: number;
+  reps: number;
+}
+
 interface WorkoutState {
   status: SessionStatus;
   workoutName: string;
@@ -29,6 +62,7 @@ interface WorkoutState {
   currentExerciseIndex: number;
   startTime: number | null;
   elapsedSeconds: number;
+  completedSummary: WorkoutSummaryData | null;
 
   startWorkout: (name: string, exercises: ActiveExercise[]) => void;
   endWorkout: () => void;
@@ -64,6 +98,79 @@ export function buildSetsForExercise(numSets: number, reps: number): ActiveSet[]
   }));
 }
 
+function buildSummary(state: {
+  workoutName: string;
+  exercises: ActiveExercise[];
+  elapsedSeconds: number;
+}): WorkoutSummaryData {
+  const exerciseSummaries: ExerciseSummary[] = state.exercises.map((ex) => {
+    const completed = ex.sets.filter((s) => s.isCompleted);
+    const rpeValues = completed.map((s) => s.rpe).filter((v): v is number => v !== null);
+    const totalVolume = completed.reduce((sum, s) => sum + s.weight * s.reps, 0);
+    const topWeight = completed.length > 0 ? Math.max(...completed.map((s) => s.weight)) : 0;
+    const topReps = completed.length > 0 ? Math.max(...completed.map((s) => s.reps)) : 0;
+
+    return {
+      exerciseName: ex.exerciseName,
+      muscleGroups: ex.muscleGroups,
+      equipment: ex.equipment,
+      completedSets: completed.length,
+      totalSets: ex.sets.length,
+      totalVolume,
+      topWeight,
+      topReps,
+      avgRpe: rpeValues.length > 0 ? rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length : null,
+      sets: ex.sets,
+    };
+  });
+
+  const allCompleted = state.exercises.flatMap((ex) => ex.sets.filter((s) => s.isCompleted));
+  const allRpe = allCompleted.map((s) => s.rpe).filter((v): v is number => v !== null);
+  const totalVolume = allCompleted.reduce((sum, s) => sum + s.weight * s.reps, 0);
+
+  const prs: PRRecord[] = [];
+  for (const ex of exerciseSummaries) {
+    const completed = ex.sets.filter((s) => s.isCompleted);
+    if (completed.length === 0) continue;
+
+    const maxWeight = Math.max(...completed.map((s) => s.weight));
+    const maxWeightSet = completed.find((s) => s.weight === maxWeight);
+    if (maxWeightSet && maxWeight > 0) {
+      prs.push({
+        exerciseName: ex.exerciseName,
+        prType: 'weight',
+        value: maxWeight,
+        weight: maxWeightSet.weight,
+        reps: maxWeightSet.reps,
+      });
+    }
+
+    const maxVolume = Math.max(...completed.map((s) => s.weight * s.reps));
+    const maxVolumeSet = completed.find((s) => s.weight * s.reps === maxVolume);
+    if (maxVolumeSet && maxVolume > 0) {
+      prs.push({
+        exerciseName: ex.exerciseName,
+        prType: 'volume',
+        value: maxVolume,
+        weight: maxVolumeSet.weight,
+        reps: maxVolumeSet.reps,
+      });
+    }
+  }
+
+  return {
+    workoutName: state.workoutName,
+    durationSeconds: state.elapsedSeconds,
+    totalVolume,
+    totalSetsCompleted: allCompleted.length,
+    totalSetsPlanned: state.exercises.reduce((sum, ex) => sum + ex.sets.length, 0),
+    averageRpe: allRpe.length > 0 ? allRpe.reduce((a, b) => a + b, 0) / allRpe.length : null,
+    exercises: exerciseSummaries,
+    completedAt: Date.now(),
+    prs,
+  };
+}
+
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   status: 'idle',
   workoutName: '',
@@ -71,6 +178,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   currentExerciseIndex: 0,
   startTime: null,
   elapsedSeconds: 0,
+  completedSummary: null,
 
   startWorkout: (name, exercises) =>
     set({
@@ -80,9 +188,14 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       currentExerciseIndex: 0,
       startTime: Date.now(),
       elapsedSeconds: 0,
+      completedSummary: null,
     }),
 
-  endWorkout: () => set({ status: 'completed' }),
+  endWorkout: () => {
+    const state = get();
+    const summary = buildSummary(state);
+    set({ status: 'completed', completedSummary: summary });
+  },
 
   setCurrentExercise: (index) => set({ currentExerciseIndex: index }),
   nextExercise: () => {
@@ -196,5 +309,6 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       currentExerciseIndex: 0,
       startTime: null,
       elapsedSeconds: 0,
+      completedSummary: null,
     }),
 }));

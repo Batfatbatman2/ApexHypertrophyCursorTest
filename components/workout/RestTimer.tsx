@@ -1,5 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  Easing,
+  interpolateColor,
+} from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -7,22 +15,16 @@ import { Colors } from '@/constants/Colors';
 import { haptics } from '@/lib/haptics';
 import { useTimerStore } from '@/stores/timer-store';
 
-const QUICK_DURATIONS = [
+const DURATIONS = [
   { label: '30s', value: 30 },
-  { label: '60s', value: 60 },
-  { label: '90s', value: 90 },
+  { label: '1m', value: 60 },
+  { label: '1:30', value: 90 },
   { label: '2m', value: 120 },
   { label: '3m', value: 180 },
 ];
 
-const EXTEND_OPTIONS = [
-  { label: '+15s', value: 15 },
-  { label: '+30s', value: 30 },
-  { label: '+60s', value: 60 },
-];
-
-const RING_SIZE = 200;
-const STROKE_WIDTH = 8;
+const RING_SIZE = 44;
+const RING_STROKE = 3.5;
 
 function formatTimer(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -40,6 +42,8 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
   const { isActive, isPaused, totalSeconds, remainingSeconds, selectedDuration } = store;
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progress = useSharedValue(1);
+  const barOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (isActive && !isPaused) {
@@ -53,29 +57,67 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
   }, [isActive, isPaused, store]);
 
   useEffect(() => {
+    if (totalSeconds > 0) {
+      progress.value = withTiming(remainingSeconds / totalSeconds, {
+        duration: 950,
+        easing: Easing.linear,
+      });
+    }
+  }, [remainingSeconds, totalSeconds, progress]);
+
+  useEffect(() => {
+    barOpacity.value = withSpring(visible ? 1 : 0, { damping: 20, stiffness: 300 });
+  }, [visible, barOpacity]);
+
+  useEffect(() => {
     if (!isActive && visible && remainingSeconds === 0 && totalSeconds > 0) {
       onComplete();
     }
   }, [isActive, visible, remainingSeconds, totalSeconds, onComplete]);
 
-  const radius = (RING_SIZE - STROKE_WIDTH) / 2;
+  const progressBarStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
+
+  const progressColorStyle = useAnimatedStyle(() => {
+    const color = interpolateColor(
+      progress.value,
+      [0, 0.3, 0.7, 1],
+      [Colors.accent, Colors.warmup, Colors.success, Colors.success],
+    );
+    return { backgroundColor: color };
+  });
+
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: barOpacity.value,
+    transform: [{ translateY: (1 - barOpacity.value) * 30 }],
+  }));
+
+  const radius = (RING_SIZE - RING_STROKE) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
-  const dashOffset = circumference * (1 - progress);
+  const ringProgress = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
+  const dashOffset = circumference * (1 - ringProgress);
+
+  if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={s.overlay}>
-        <View style={s.container}>
-          {/* ── Circular Timer ────────────────────── */}
+    <Animated.View style={[s.wrapper, containerStyle]}>
+      {/* Top progress rail */}
+      <View style={s.progressRail}>
+        <Animated.View style={[s.progressFill, progressBarStyle, progressColorStyle]} />
+      </View>
+
+      <View style={s.content}>
+        {/* Left: ring + countdown */}
+        <View style={s.timerGroup}>
           <View style={s.ringWrap}>
-            <Svg width={RING_SIZE} height={RING_SIZE} style={s.ringSvg}>
+            <Svg width={RING_SIZE} height={RING_SIZE}>
               <Circle
                 cx={RING_SIZE / 2}
                 cy={RING_SIZE / 2}
                 r={radius}
                 stroke={Colors.surfaceBorder}
-                strokeWidth={STROKE_WIDTH}
+                strokeWidth={RING_STROKE}
                 fill="none"
               />
               <Circle
@@ -83,7 +125,7 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
                 cy={RING_SIZE / 2}
                 r={radius}
                 stroke={Colors.accent}
-                strokeWidth={STROKE_WIDTH}
+                strokeWidth={RING_STROKE}
                 fill="none"
                 strokeDasharray={`${circumference}`}
                 strokeDashoffset={dashOffset}
@@ -92,198 +134,200 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
                 origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
               />
             </Svg>
-            <View style={s.ringCenter}>
-              <Text style={s.timeText}>{formatTimer(remainingSeconds)}</Text>
-              <Text style={s.remainingLabel}>REMAINING</Text>
-            </View>
-          </View>
-
-          {/* ── Quick Set ────────────────────────── */}
-          <Text style={s.sectionLabel}>QUICK SET</Text>
-          <View style={s.quickRow}>
-            {QUICK_DURATIONS.map((d) => {
-              const active = selectedDuration === d.value;
-              return (
-                <Pressable
-                  key={d.value}
-                  onPress={() => store.setDuration(d.value)}
-                  style={[s.quickBtn, active && s.quickBtnActive]}
-                >
-                  <Text style={[s.quickText, active && s.quickTextActive]}>{d.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* ── Extend ───────────────────────────── */}
-          <Text style={s.sectionLabel}>EXTEND</Text>
-          <View style={s.extendRow}>
-            {EXTEND_OPTIONS.map((e) => (
-              <Pressable
-                key={e.value}
-                onPress={() => {
-                  haptics.light();
-                  store.extend(e.value);
-                }}
-                style={s.extendBtn}
-              >
-                <Text style={s.extendText}>{e.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* ── Actions ──────────────────────────── */}
-          <View style={s.actionRow}>
+            {/* Pause/play overlay inside ring */}
             <Pressable
-              onPress={() => {
-                store.skip();
-                onComplete();
-              }}
-              style={s.skipBtn}
-            >
-              <FontAwesome name="close" size={16} color={Colors.textSecondary} />
-              <Text style={s.skipText}>Skip</Text>
-            </Pressable>
-
-            <Pressable
+              style={s.ringOverlay}
               onPress={() => {
                 haptics.selection();
                 if (isPaused) store.resume();
                 else store.pause();
               }}
-              style={s.pauseBtn}
             >
-              <FontAwesome name={isPaused ? 'play' : 'pause'} size={16} color="#FFFFFF" />
-              <Text style={s.pauseText}>{isPaused ? 'Resume' : 'Pause'}</Text>
+              <FontAwesome
+                name={isPaused ? 'play' : 'pause'}
+                size={13}
+                color={Colors.textPrimary}
+              />
             </Pressable>
           </View>
+
+          <View>
+            <Text style={s.countdown}>{formatTimer(remainingSeconds)}</Text>
+            <Text style={s.restLabel}>REST</Text>
+          </View>
         </View>
+
+        {/* Right: skip */}
+        <Pressable
+          onPress={() => {
+            store.skip();
+            onComplete();
+          }}
+          style={s.skipBtn}
+          hitSlop={8}
+        >
+          <Text style={s.skipText}>Skip</Text>
+          <FontAwesome name="angle-right" size={14} color={Colors.textTertiary} />
+        </Pressable>
       </View>
-    </Modal>
+
+      {/* Duration selector — always visible, inline segmented control */}
+      <View style={s.durationRow}>
+        {DURATIONS.map((d) => {
+          const active = selectedDuration === d.value;
+          return (
+            <Pressable
+              key={d.value}
+              onPress={() => store.setDuration(d.value)}
+              style={[s.durChip, active && s.durChipActive]}
+            >
+              <Text style={[s.durChipText, active && s.durChipTextActive]}>{d.label}</Text>
+            </Pressable>
+          );
+        })}
+
+        <View style={s.extendDivider} />
+
+        <Pressable
+          onPress={() => {
+            haptics.light();
+            store.extend(15);
+          }}
+          style={s.extendBtn}
+        >
+          <Text style={s.extendBtnText}>+15s</Text>
+        </Pressable>
+      </View>
+    </Animated.View>
   );
 }
 
 const s = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  container: {
-    width: '100%',
-    maxWidth: 360,
-    alignItems: 'center',
+  wrapper: {
+    position: 'absolute',
+    bottom: 76,
+    left: 10,
+    right: 10,
+    borderRadius: 18,
+    backgroundColor: '#141414',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 20,
   },
 
+  progressRail: {
+    height: 3,
+    backgroundColor: '#1F1F1F',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+
+  timerGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   ringWrap: {
     width: RING_SIZE,
     height: RING_SIZE,
     position: 'relative',
+  },
+  ringOverlay: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
   },
-  ringSvg: { position: 'absolute' },
-  ringCenter: { alignItems: 'center' },
-  timeText: {
-    color: Colors.accent,
-    fontSize: 48,
+  countdown: {
+    color: Colors.textPrimary,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: -1,
+    letterSpacing: -0.8,
+    lineHeight: 26,
   },
-  remainingLabel: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginTop: 4,
-  },
-
-  sectionLabel: {
+  restLabel: {
     color: Colors.textTertiary,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    letterSpacing: 1.2,
-    marginBottom: 10,
+    letterSpacing: 1.5,
+    lineHeight: 12,
   },
 
-  quickRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 24,
-  },
-  quickBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-  },
-  quickBtnActive: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
-  },
-  quickText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  quickTextActive: { color: '#FFFFFF' },
-
-  extendRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 32,
-  },
-  extendBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: Colors.accent,
-  },
-  extendText: {
-    color: Colors.accent,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  actionRow: {
-    flexDirection: 'row',
-    gap: 16,
-    width: '100%',
-  },
   skipBtn: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: Colors.surface,
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#1E1E1E',
   },
   skipText: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '700',
+    color: Colors.textTertiary,
+    fontSize: 13,
+    fontWeight: '600',
   },
-  pauseBtn: {
-    flex: 1,
+
+  durationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: Colors.accent,
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 4,
   },
-  pauseText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  durChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+  },
+  durChipActive: {
+    backgroundColor: Colors.accent + '1A',
+    borderWidth: 1,
+    borderColor: Colors.accent + '44',
+  },
+  durChipText: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  durChipTextActive: {
+    color: Colors.accent,
+  },
+
+  extendDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: '#2A2A2A',
+    marginHorizontal: 4,
+  },
+  extendBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.accent + '55',
+  },
+  extendBtnText: {
+    color: Colors.accent,
+    fontSize: 12,
     fontWeight: '700',
   },
 });

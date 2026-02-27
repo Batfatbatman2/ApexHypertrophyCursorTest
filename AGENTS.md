@@ -26,4 +26,5 @@ Apex Hypertrophy is a premium cross-platform hypertrophy training app (iOS, Andr
 - **NativeWind**: Configured via `metro.config.js` (withNativeWind), `tailwind.config.js`, and `global.css`. The `global.css` import is in `app/_layout.tsx`.
 - **Supabase**: Client in `lib/supabase.ts` uses `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` env vars. Currently placeholder values — set real values when Supabase project is created.
 - **Haptics**: `lib/haptics.ts` wraps `expo-haptics` with no-op fallback on web.
+- **Auth bypass**: The login screen (`app/(auth)/login.tsx`) has a "Skip for now" button. Use it for local testing since Supabase is not configured with real credentials.
 - **Expo SDK 55**: Uses React 19.2, React Native 0.83. Some peer dependency warnings for `react-native-gesture-handler` are benign.

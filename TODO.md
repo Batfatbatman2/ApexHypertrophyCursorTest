@@ -357,15 +357,15 @@ Matching mockup screenshot 13.
 
 ## Phase 9: Workout Summary
 
-- [ ] **9.1** Post-workout summary screen:
+- [x] **9.1** Post-workout summary screen:
   - Total session duration
   - Total volume (weight × reps sum)
   - Total sets completed
   - Average RPE
   - Exercise-by-exercise breakdown
   - PR highlights with celebration badges
-- [ ] **9.2** PR celebration if new records achieved (confetti + haptics)
-- [ ] **9.3** Share summary as branded image
+- [x] **9.2** PR celebration if new records achieved (confetti + haptics)
+- [x] **9.3** Share summary as branded image
 
 ---
 
@@ -373,28 +373,24 @@ Matching mockup screenshot 13.
 
 Matching mockup screenshots 10 and 11.
 
-- [ ] **10.1** Analytics screen layout:
-  - "Analytics" header + "Track your progress over time" subtitle
-  - Time range selector tabs: 4 weeks, 8 weeks (default, blue fill), 12 weeks, All
-- [ ] **10.2** Stat cards grid (2×2):
-  - Day Streak (fire icon, red)
-  - Workouts (dumbbell icon, red)
-  - Total Sets (bar chart icon, red)
-  - Per Week (calendar icon, red)
+- [x] **10.1** Analytics screen layout:
+  - "Analytics" header
+  - Time range segmented control: 4W, 8W (default), 12W, All
+- [x] **10.2** Stat cards row:
+  - Streak (fire icon), Workouts (bolt icon), Sets (bar chart icon), PRs (trophy icon)
   - Large number + label below each
-- [ ] **10.3** Weekly Volume bar chart (Victory Native):
-  - Dual series: Sets (red bars) + Workouts (green bars)
-  - X-axis: week labels (Jan 4, Jan 11, etc.)
-  - Y-axis: count
-  - Dashed grid lines
-- [ ] **10.4** Muscle Group Distribution pie chart:
+- [x] **10.3** Weekly Volume bar chart:
+  - Sets per week with animated bars
+  - X-axis: week labels, Y-axis: set count
+  - Color-coded bars with value labels
+- [x] **10.4** Muscle Group Distribution donut chart (SVG):
   - Colored segments per muscle group
   - Total sets in center
-  - Legend showing muscle name + percentage
-- [ ] **10.5** Recent Workouts list:
-  - Workout name + date
+  - Horizontal bar breakdown with percentages
+- [x] **10.5** Recent Workouts list:
+  - Workout name + date + PR badge
   - Stats: sets, time, RPE (red number)
-  - Exercise breakdown: exercise name + set count
+  - Expandable exercise breakdown with sets×reps @ weight
   - "+N more exercises" expandable
 - [ ] **10.6** Strength progression line charts per exercise
 - [ ] **10.7** Correlation engine scatter plots (sleep vs strength, stress vs RPE)
@@ -403,14 +399,14 @@ Matching mockup screenshots 10 and 11.
 
 ## Phase 11: Personal Record (PR) System
 
-- [ ] **11.1** PR detection engine — runs on every completed set:
+- [x] **11.1** PR detection engine — runs on every completed set:
   - Weight PR (heaviest weight for given reps)
   - Rep PR (most reps at given weight)
   - Volume PR (weight × reps highest product)
-- [ ] **11.2** Celebration modal — confetti particles (Skia), multi-stage haptics, badge display
-- [ ] **11.3** PR history view per exercise — dates, values, % improvement, link to session
-- [ ] **11.4** PR counter widget on home screen
-- [ ] **11.5** Badge system (Weight / Rep / Volume icons)
+- [x] **11.2** Celebration toast — golden PR toast with haptics + badge chips (non-blocking)
+- [x] **11.3** PR history view per exercise — dates, values, PR timeline with color-coded dots
+- [x] **11.4** PR counter widget on home screen (tappable, navigates to PR history)
+- [x] **11.5** Badge system (Weight 🏋️ gold / Rep 🔁 green / Volume 📊 cyan)
 
 ---
 
