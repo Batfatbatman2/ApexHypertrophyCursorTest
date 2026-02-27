@@ -7,6 +7,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors } from '@/constants/Colors';
 import { SET_TYPES, type SetType } from '@/constants/set-types';
 import { Button, Card, Badge, BottomSheetModal } from '@/components/ui';
+import { RPEModal } from '@/components/workout/RPEModal';
 import { haptics } from '@/lib/haptics';
 import { useWorkoutStore, type ActiveSet } from '@/stores/workout-store';
 
@@ -22,6 +23,7 @@ export default function WorkoutScreen() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [pickerSetId, setPickerSetId] = useState<string | null>(null);
+  const [rpeSetId, setRpeSetId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'active') {
@@ -43,17 +45,32 @@ export default function WorkoutScreen() {
 
   const handleCompleteSet = useCallback(
     (setId: string) => {
-      const s = exercise?.sets.find((st) => st.id === setId);
-      if (!s) return;
-      if (s.weight <= 0 && s.reps <= 0) {
+      const st = exercise?.sets.find((x) => x.id === setId);
+      if (!st) return;
+      if (st.weight <= 0 && st.reps <= 0) {
         haptics.warning();
         return;
       }
       haptics.success();
       store.completeSet(currentExerciseIndex, setId);
+      setRpeSetId(setId);
     },
     [exercise, currentExerciseIndex, store],
   );
+
+  const handleRpeSubmit = useCallback(
+    (rpe: number, muscleConnection: number, _notes: string) => {
+      if (rpeSetId) {
+        store.updateSet(currentExerciseIndex, rpeSetId, { rpe, muscleConnection });
+      }
+      setRpeSetId(null);
+    },
+    [rpeSetId, currentExerciseIndex, store],
+  );
+
+  const handleRpeSkip = useCallback(() => {
+    setRpeSetId(null);
+  }, []);
 
   const handleCompleteFirstIncomplete = useCallback(() => {
     if (!exercise) return;
@@ -230,6 +247,9 @@ export default function WorkoutScreen() {
           );
         })}
       </BottomSheetModal>
+
+      {/* ── RPE Feedback Modal ───────────────────── */}
+      <RPEModal visible={rpeSetId !== null} onSubmit={handleRpeSubmit} onSkip={handleRpeSkip} />
     </SafeAreaView>
   );
 }

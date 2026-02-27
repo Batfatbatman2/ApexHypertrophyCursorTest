@@ -10,6 +10,7 @@ export interface ActiveSet {
   weight: number;
   reps: number;
   rpe: number | null;
+  muscleConnection: number | null;
   isCompleted: boolean;
   parentSetId: string | null;
 }
@@ -57,6 +58,7 @@ export function buildSetsForExercise(numSets: number, reps: number): ActiveSet[]
     weight: 0,
     reps,
     rpe: null,
+    muscleConnection: null,
     isCompleted: false,
     parentSetId: null,
   }));
@@ -128,6 +130,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
           weight: 0,
           reps: lastSet?.reps ?? 8,
           rpe: null,
+          muscleConnection: null,
           isCompleted: false,
           parentSetId: null,
         },
@@ -162,6 +165,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       const parentIdx = ex.sets.findIndex((st) => st.id === parentSetId);
       const newSet: ActiveSet = {
         id: genSetId(),
+        muscleConnection: null,
         setNumber: dropCount + 1,
         setType: 'dropSet',
         weight: 0,

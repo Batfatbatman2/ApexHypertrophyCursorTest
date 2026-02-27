@@ -323,14 +323,14 @@ Matching mockup screenshots 7, 8, and 12. This is the core feature.
 
 ## Phase 7: RPE & Feedback System
 
-- [ ] **7.1** RPE modal — auto-shows after set completion:
-  - RPE slider 6.0–10.0 with half steps
-  - Color gradient (green → yellow → red)
-  - Muscle connection 1–5 stars with sparkle animation
-  - Optional notes field
-  - Skip button with gentle nudge
-- [ ] **7.2** Haptic feedback on slider movement
-- [ ] **7.3** Save RPE + connection to `SetLog` record
+- [x] **7.1** `RPEModal` (`components/workout/RPEModal.tsx`) — auto-shows after set completion:
+  - RPE bar selector 6.0–10.0 with half steps, color gradient (green → yellow → red)
+  - Large RPE value + descriptive label (Very Easy / Moderate / Hard / Very Hard / Maximum Effort)
+  - Muscle connection 1–5 stars with label (Weak / Moderate / Strong / Perfect)
+  - Optional notes TextInput
+  - "Save Feedback" primary button + "Skip for now" link
+- [x] **7.2** Haptic feedback on RPE bar tap and star selection (`haptics.selection()`)
+- [x] **7.3** Save RPE + muscleConnection to ActiveSet via `updateSet()` on submit; skip dismisses without saving
 
 ---
 
