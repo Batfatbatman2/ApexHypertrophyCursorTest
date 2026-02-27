@@ -284,19 +284,19 @@ export default function WorkoutScreen() {
                 onComplete={() => handleCompleteSet(set.id)}
               />
             ))}
-          </View>
 
-          {/* Add Set — dashed outline */}
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              store.addSet(currentExerciseIndex);
-            }}
-            style={s.addSetBtn}
-          >
-            <Text style={s.addSetPlus}>+</Text>
-            <Text style={s.addSetText}>ADD SET</Text>
-          </Pressable>
+            {/* Add Set — dashed, inside card */}
+            <Pressable
+              onPress={() => {
+                haptics.light();
+                store.addSet(currentExerciseIndex);
+              }}
+              style={s.addSetBtn}
+            >
+              <Text style={s.addSetPlus}>+</Text>
+              <Text style={s.addSetText}>ADD SET</Text>
+            </Pressable>
+          </View>
 
           {/* Up Next Preview — dashed outline */}
           {nextExercise && (
@@ -448,48 +448,24 @@ function SetRowComponent({
     <View style={rowStyle}>
       {/* ── Type Icon + Label ── */}
       <Pressable onPress={onTypeTap} style={s.colSet}>
-        {set.setType === 'warmup' ? (
+        {set.setType === 'warmup' || set.setType === 'dropSet' || set.setType === 'myoRep' ? (
           <View style={[s.typeIconCircle, { backgroundColor: config.color + '1A' }]}>
             <Text style={{ fontSize: 14 }}>{config.icon}</Text>
           </View>
-        ) : set.setType === 'dropSet' ? (
-          <View style={[s.typeIconCircle, { backgroundColor: config.color + '1A' }]}>
-            <Text style={{ fontSize: 14 }}>{config.icon}</Text>
+        ) : isActive || set.isCompleted ? (
+          <View style={[s.typeNumCircleFilled, { backgroundColor: config.color }]}>
+            <Text style={s.typeNumTextFilled}>
+              {isDropChild ? `D${set.setNumber}` : set.setNumber}
+            </Text>
           </View>
         ) : (
-          <View
-            style={[
-              s.typeNumCircle,
-              {
-                borderColor: isActive
-                  ? config.color
-                  : isFuture
-                    ? Colors.textTertiary
-                    : config.color,
-                backgroundColor: isActive ? config.color + '1A' : 'transparent',
-              },
-            ]}
-          >
-            <Text
-              style={[
-                s.typeNumText,
-                {
-                  color: isActive ? config.color : isFuture ? Colors.textTertiary : config.color,
-                },
-              ]}
-            >
+          <View style={s.typeNumPlain}>
+            <Text style={[s.typeNumTextPlain, { color: Colors.textTertiary }]}>
               {isDropChild ? `D${set.setNumber}` : set.setNumber}
             </Text>
           </View>
         )}
-        <Text
-          style={[
-            s.typeLabelText,
-            {
-              color: isFuture ? Colors.textTertiary : config.color,
-            },
-          ]}
-        >
+        <Text style={[s.typeLabelText, { color: isFuture ? Colors.textTertiary : config.color }]}>
           {typeLabel}
         </Text>
       </Pressable>
@@ -620,7 +596,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingTop: 14,
-    paddingBottom: 4,
+    paddingBottom: 8,
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
@@ -649,22 +625,22 @@ const s = StyleSheet.create({
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 12,
-    marginVertical: 2,
+    marginVertical: 3,
     paddingHorizontal: 4,
   },
   setRowBorder: {},
   setRowIndented: { paddingLeft: 8 },
   setRowActive: {
-    backgroundColor: 'rgba(255, 45, 45, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 45, 45, 0.3)',
+    backgroundColor: 'rgba(255, 45, 45, 0.07)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 45, 45, 0.35)',
     shadowColor: '#FF2D2D',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
   },
 
   /* ── Type Icon ── */
@@ -675,17 +651,27 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  typeNumCircle: {
+  typeNumCircleFilled: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  typeNumText: {
+  typeNumTextFilled: {
     fontSize: 13,
     fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  typeNumPlain: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeNumTextPlain: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   typeLabelText: {
     fontSize: 9,
@@ -717,18 +703,16 @@ const s = StyleSheet.create({
     paddingVertical: 0,
   },
   numInputActive: {
-    backgroundColor: 'rgba(255, 45, 45, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 45, 45, 0.25)',
-    color: Colors.textPrimary,
+    backgroundColor: 'rgba(255, 45, 45, 0.18)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 45, 45, 0.35)',
   },
   numInputCompleted: {
     backgroundColor: Colors.surfaceLight,
-    opacity: 0.8,
   },
   numInputFuture: {
-    backgroundColor: Colors.surfaceLight + '66',
-    opacity: 0.5,
+    backgroundColor: '#1A1A1A',
+    color: Colors.textTertiary,
   },
 
   /* ── Checkbox ── */
@@ -752,16 +736,16 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  /* ── Add Set Button ── */
+  /* ── Add Set Button (inside card) ── */
   addSetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 16,
-    marginBottom: 28,
+    marginTop: 8,
+    marginBottom: 6,
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: Colors.surfaceBorder,
     borderStyle: 'dashed',
