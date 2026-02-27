@@ -3,7 +3,15 @@ import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-na
 
 import { Colors } from '@/constants/Colors';
 
-export type BadgeVariant = 'accent' | 'success' | 'warning' | 'error' | 'muted' | 'custom';
+export type BadgeVariant =
+  | 'accent'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'muted'
+  | 'custom'
+  | 'outlined'
+  | 'outlinedMuted';
 
 interface BadgeProps {
   label: string;
@@ -12,24 +20,29 @@ interface BadgeProps {
   size?: 'sm' | 'md';
 }
 
-const VARIANT_MAP: Record<Exclude<BadgeVariant, 'custom'>, { bg: string; text: string }> = {
+const VARIANT_MAP: Record<string, { bg: string; text: string; border?: string }> = {
   accent: { bg: 'rgba(255, 45, 45, 0.15)', text: Colors.accent },
   success: { bg: 'rgba(34, 197, 94, 0.15)', text: Colors.success },
   warning: { bg: 'rgba(250, 204, 21, 0.15)', text: Colors.warning },
   error: { bg: Colors.accent, text: '#FFFFFF' },
   muted: { bg: Colors.surfaceLight, text: Colors.textSecondary },
+  outlined: { bg: 'transparent', text: Colors.textPrimary, border: Colors.surfaceBorder },
+  outlinedMuted: { bg: 'transparent', text: Colors.textSecondary, border: '#333333' },
 };
 
 export function Badge({ label, variant = 'accent', color, size = 'sm' }: BadgeProps) {
   let bg: string;
   let textColor: string;
+  let borderColor: string | undefined;
 
   if (variant === 'custom' && color) {
     bg = color + '22';
     textColor = color;
   } else if (variant !== 'custom') {
-    bg = VARIANT_MAP[variant].bg;
-    textColor = VARIANT_MAP[variant].text;
+    const v = VARIANT_MAP[variant] ?? VARIANT_MAP.muted;
+    bg = v.bg;
+    textColor = v.text;
+    borderColor = v.border;
   } else {
     bg = VARIANT_MAP.muted.bg;
     textColor = VARIANT_MAP.muted.text;
@@ -47,7 +60,14 @@ export function Badge({ label, variant = 'accent', color, size = 'sm' }: BadgePr
         };
 
   return (
-    <View style={[styles.base, sizeStyle.container, { backgroundColor: bg }]}>
+    <View
+      style={[
+        styles.base,
+        sizeStyle.container,
+        { backgroundColor: bg },
+        borderColor ? { borderWidth: 1, borderColor } : undefined,
+      ]}
+    >
       <Text style={[styles.baseText, sizeStyle.text, { color: textColor }]}>{label}</Text>
     </View>
   );
