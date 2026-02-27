@@ -240,8 +240,10 @@ export default function WorkoutScreen() {
               </Text>
             </View>
           </View>
-          <View style={s.headerBolt}>
-            <FontAwesome name="bolt" size={16} color="#FFD700" />
+          <View style={s.headerBoltWrap}>
+            <View style={s.headerBoltCircle}>
+              <FontAwesome name="bolt" size={16} color="#FFD700" />
+            </View>
           </View>
         </View>
 
@@ -465,16 +467,28 @@ function SetRowComponent({
             </Text>
           </View>
         )}
-        <Text style={[s.typeLabelText, { color: isFuture ? Colors.textTertiary : config.color }]}>
+        <Text
+          style={[
+            s.typeLabelText,
+            {
+              color: isFuture && set.setType === 'working' ? Colors.textTertiary : config.color,
+            },
+          ]}
+        >
           {typeLabel}
         </Text>
       </Pressable>
 
-      {/* ── Previous ── */}
+      {/* ── Previous (two-line format matching mockup) ── */}
       <View style={s.colPrev}>
-        <Text style={[s.prevText, isFuture && s.prevTextDim]}>
-          {set.isCompleted ? `${set.weight} × ${set.reps}` : '—'}
-        </Text>
+        {set.isCompleted ? (
+          <>
+            <Text style={s.prevWeight}>{set.weight}</Text>
+            <Text style={s.prevReps}>× {set.reps}</Text>
+          </>
+        ) : (
+          <Text style={[s.prevDash, isFuture && s.prevTextDim]}>—</Text>
+        )}
       </View>
 
       {/* ── Weight Input ── */}
@@ -570,9 +584,17 @@ const s = StyleSheet.create({
   headerTimer: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500' },
   headerDot: { color: Colors.textTertiary, fontSize: 12 },
   headerExCount: { color: Colors.accent, fontSize: 12, fontWeight: '700' },
-  headerBolt: {
+  headerBoltWrap: {
     width: 36,
     height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBoltCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -625,69 +647,81 @@ const s = StyleSheet.create({
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginVertical: 3,
-    paddingHorizontal: 4,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginVertical: 4,
+    paddingHorizontal: 6,
   },
   setRowBorder: {},
   setRowIndented: { paddingLeft: 8 },
   setRowActive: {
-    backgroundColor: 'rgba(255, 45, 45, 0.07)',
+    backgroundColor: 'rgba(255, 45, 45, 0.08)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 45, 45, 0.35)',
+    borderColor: 'rgba(255, 45, 45, 0.4)',
     shadowColor: '#FF2D2D',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
   },
 
   /* ── Type Icon ── */
   typeIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
   typeNumCircleFilled: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
   typeNumTextFilled: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
   },
   typeNumPlain: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
   },
   typeNumTextPlain: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
   },
   typeLabelText: {
     fontSize: 9,
     fontWeight: '700',
-    letterSpacing: 0.3,
-    marginTop: 1,
+    letterSpacing: 0.4,
+    marginTop: 2,
   },
 
-  /* ── Previous ── */
-  prevText: {
+  /* ── Previous (two-line format) ── */
+  prevWeight: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  prevReps: {
     color: Colors.textTertiary,
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
+    lineHeight: 14,
+  },
+  prevDash: {
+    color: Colors.textTertiary,
+    fontSize: 13,
     fontWeight: '500',
   },
   prevTextDim: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
 
   /* ── Numeric Inputs ── */
@@ -698,20 +732,22 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
-    width: 58,
-    height: 42,
+    width: 60,
+    height: 44,
     paddingVertical: 0,
   },
   numInputActive: {
-    backgroundColor: 'rgba(255, 45, 45, 0.18)',
+    backgroundColor: 'rgba(255, 45, 45, 0.22)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 45, 45, 0.35)',
+    borderColor: 'rgba(255, 45, 45, 0.45)',
   },
   numInputCompleted: {
     backgroundColor: Colors.surfaceLight,
   },
   numInputFuture: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#161616',
+    borderWidth: 1,
+    borderColor: '#222222',
     color: Colors.textTertiary,
   },
 
@@ -721,11 +757,11 @@ const s = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#3A3A3A',
   },
   checkEmptyDim: {
-    borderColor: '#2A2A2A',
-    opacity: 0.5,
+    borderColor: '#282828',
+    opacity: 0.6,
   },
   checkDone: {
     width: 28,
