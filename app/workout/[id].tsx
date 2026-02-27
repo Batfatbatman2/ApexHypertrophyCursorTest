@@ -26,8 +26,10 @@ export default function WorkoutScreen() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [pickerSetId, setPickerSetId] = useState<string | null>(null);
-  const [rpeSetId, setRpeSetId] = useState<string | null>(null);
+  const [showRpe, setShowRpe] = useState(false);
+  const [rpeExerciseIndex, setRpeExerciseIndex] = useState<number | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [pendingNav, setPendingNav] = useState<'next' | 'prev' | 'finish' | null>(null);
   const restTimer = useTimerStore();
   const { defaultRestDuration, autoStartTimer } = useSettingsStore();
 
@@ -43,18 +45,64 @@ export default function WorkoutScreen() {
   const exercise = exercises[currentExerciseIndex];
   const nextExercise = exercises[currentExerciseIndex + 1];
 
+  const hasCompletedSets = useCallback(
+    (exIndex: number) => exercises[exIndex]?.sets.some((s) => s.isCompleted) ?? false,
+    [exercises],
+  );
+
+  const completedSetsCount = useCallback(
+    (exIndex: number) => exercises[exIndex]?.sets.filter((s) => s.isCompleted).length ?? 0,
+    [exercises],
+  );
+
   const handleClose = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     store.reset();
     router.back();
   }, [store]);
 
+  const performNavigation = useCallback(
+    (nav: 'next' | 'prev' | 'finish') => {
+      if (nav === 'next') {
+        store.nextExercise();
+      } else if (nav === 'prev') {
+        store.prevExercise();
+      } else if (nav === 'finish') {
+        if (timerRef.current) clearInterval(timerRef.current);
+        haptics.success();
+        store.endWorkout();
+        router.replace('/workout/summary/completed');
+      }
+    },
+    [store],
+  );
+
+  const maybeShowRpeThenNavigate = useCallback(
+    (nav: 'next' | 'prev' | 'finish') => {
+      if (hasCompletedSets(currentExerciseIndex)) {
+        setPendingNav(nav);
+        setRpeExerciseIndex(currentExerciseIndex);
+        setShowRpe(true);
+      } else {
+        performNavigation(nav);
+      }
+    },
+    [currentExerciseIndex, hasCompletedSets, performNavigation],
+  );
+
   const handleFinishWorkout = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    haptics.success();
-    store.endWorkout();
-    router.replace('/workout/summary/completed');
-  }, [store]);
+    maybeShowRpeThenNavigate('finish');
+  }, [maybeShowRpeThenNavigate]);
+
+  const handleNextExercise = useCallback(() => {
+    haptics.light();
+    maybeShowRpeThenNavigate('next');
+  }, [maybeShowRpeThenNavigate]);
+
+  const handlePrevExercise = useCallback(() => {
+    haptics.light();
+    maybeShowRpeThenNavigate('prev');
+  }, [maybeShowRpeThenNavigate]);
 
   const handleCompleteSet = useCallback(
     (setId: string) => {
@@ -66,33 +114,43 @@ export default function WorkoutScreen() {
       }
       haptics.success();
       store.completeSet(currentExerciseIndex, setId);
-      setRpeSetId(setId);
-    },
-    [exercise, currentExerciseIndex, store],
-  );
 
-  const startRestTimerIfEnabled = useCallback(() => {
-    if (autoStartTimer) {
-      restTimer.start(defaultRestDuration);
-      setShowRestTimer(true);
-    }
-  }, [autoStartTimer, defaultRestDuration, restTimer]);
+      if (autoStartTimer) {
+        restTimer.start(defaultRestDuration);
+        setShowRestTimer(true);
+      }
+    },
+    [exercise, currentExerciseIndex, store, autoStartTimer, defaultRestDuration, restTimer],
+  );
 
   const handleRpeSubmit = useCallback(
     (rpe: number, muscleConnection: number, _notes: string) => {
-      if (rpeSetId) {
-        store.updateSet(currentExerciseIndex, rpeSetId, { rpe, muscleConnection });
+      if (rpeExerciseIndex !== null) {
+        const ex = exercises[rpeExerciseIndex];
+        ex.sets
+          .filter((st) => st.isCompleted)
+          .forEach((st) => {
+            store.updateSet(rpeExerciseIndex, st.id, { rpe, muscleConnection });
+          });
       }
-      setRpeSetId(null);
-      startRestTimerIfEnabled();
+      setShowRpe(false);
+      setRpeExerciseIndex(null);
+      if (pendingNav) {
+        performNavigation(pendingNav);
+        setPendingNav(null);
+      }
     },
-    [rpeSetId, currentExerciseIndex, store, startRestTimerIfEnabled],
+    [rpeExerciseIndex, exercises, store, pendingNav, performNavigation],
   );
 
   const handleRpeSkip = useCallback(() => {
-    setRpeSetId(null);
-    startRestTimerIfEnabled();
-  }, [startRestTimerIfEnabled]);
+    setShowRpe(false);
+    setRpeExerciseIndex(null);
+    if (pendingNav) {
+      performNavigation(pendingNav);
+      setPendingNav(null);
+    }
+  }, [pendingNav, performNavigation]);
 
   const handleRestComplete = useCallback(() => {
     setShowRestTimer(false);
@@ -100,7 +158,7 @@ export default function WorkoutScreen() {
 
   const handleCompleteFirstIncomplete = useCallback(() => {
     if (!exercise) return;
-    const incomplete = exercise.sets.find((s) => !s.isCompleted);
+    const incomplete = exercise.sets.find((st) => !st.isCompleted);
     if (incomplete) {
       handleCompleteSet(incomplete.id);
     }
@@ -168,7 +226,7 @@ export default function WorkoutScreen() {
           />
         ))}
 
-        {/* Add Set / Drop Set */}
+        {/* Add Set */}
         <View style={s.addRow}>
           <Pressable
             onPress={() => {
@@ -209,13 +267,13 @@ export default function WorkoutScreen() {
         </View>
       </ScrollView>
 
+      {/* ── Rest Timer (compact bottom bar) ────── */}
+      <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
+
       {/* ── Footer ───────────────────────────────── */}
       <View style={s.footer}>
         <Pressable
-          onPress={() => {
-            haptics.light();
-            store.prevExercise();
-          }}
+          onPress={handlePrevExercise}
           style={s.navBtn}
           disabled={currentExerciseIndex === 0}
         >
@@ -235,10 +293,7 @@ export default function WorkoutScreen() {
         />
 
         <Pressable
-          onPress={() => {
-            haptics.light();
-            store.nextExercise();
-          }}
+          onPress={handleNextExercise}
           style={s.navBtn}
           disabled={currentExerciseIndex === exercises.length - 1}
         >
@@ -285,11 +340,16 @@ export default function WorkoutScreen() {
         })}
       </BottomSheetModal>
 
-      {/* ── RPE Feedback Modal ───────────────────── */}
-      <RPEModal visible={rpeSetId !== null} onSubmit={handleRpeSubmit} onSkip={handleRpeSkip} />
-
-      {/* ── Rest Timer ───────────────────────────── */}
-      <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
+      {/* ── RPE Feedback Modal (exercise-level) ─── */}
+      <RPEModal
+        visible={showRpe}
+        exerciseName={
+          rpeExerciseIndex !== null ? (exercises[rpeExerciseIndex]?.exerciseName ?? '') : ''
+        }
+        completedSetsCount={rpeExerciseIndex !== null ? completedSetsCount(rpeExerciseIndex) : 0}
+        onSubmit={handleRpeSubmit}
+        onSkip={handleRpeSkip}
+      />
     </SafeAreaView>
   );
 }
@@ -406,8 +466,18 @@ const s = StyleSheet.create({
   },
   tagRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
 
-  tableHeader: { flexDirection: 'row', alignItems: 'center', paddingBottom: 10, marginBottom: 4 },
-  colHeader: { color: Colors.textTertiary, fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  tableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 10,
+    marginBottom: 4,
+  },
+  colHeader: {
+    color: Colors.textTertiary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   colSet: { width: 48, alignItems: 'center' },
   colPrev: { width: 60, textAlign: 'center' },
   colWeight: { flex: 1, alignItems: 'center' },
@@ -471,7 +541,12 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  addRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, marginBottom: 24 },
+  addRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    marginBottom: 24,
+  },
   addSetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -489,7 +564,12 @@ const s = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 6,
   },
-  upNextName: { color: Colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 8 },
+  upNextName: {
+    color: Colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
   upNextTags: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   upNextSets: { color: Colors.textSecondary, fontSize: 12 },
 
@@ -504,7 +584,12 @@ const s = StyleSheet.create({
     borderTopColor: Colors.divider,
     gap: 8,
   },
-  navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  navBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   completeBtn: { flex: 1 },
 
   pickerTitle: {
@@ -531,5 +616,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickerLabel: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600', flex: 1 },
+  pickerLabel: {
+    color: Colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+  },
 });

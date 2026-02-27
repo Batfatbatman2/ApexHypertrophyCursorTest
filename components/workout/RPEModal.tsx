@@ -8,6 +8,8 @@ import { haptics } from '@/lib/haptics';
 
 interface RPEModalProps {
   visible: boolean;
+  exerciseName: string;
+  completedSetsCount: number;
   onSubmit: (rpe: number, muscleConnection: number, notes: string) => void;
   onSkip: () => void;
 }
@@ -28,7 +30,13 @@ function getRPELabel(rpe: number): string {
   return 'Maximum Effort';
 }
 
-export function RPEModal({ visible, onSubmit, onSkip }: RPEModalProps) {
+export function RPEModal({
+  visible,
+  exerciseName,
+  completedSetsCount,
+  onSubmit,
+  onSkip,
+}: RPEModalProps) {
   const [rpe, setRpe] = useState(8);
   const [muscleConnection, setMuscleConnection] = useState(3);
   const [notes, setNotes] = useState('');
@@ -51,7 +59,15 @@ export function RPEModal({ visible, onSubmit, onSkip }: RPEModalProps) {
 
   return (
     <BottomSheetModal visible={visible} onClose={handleSkip}>
-      <Text style={s.title}>How was that set?</Text>
+      {/* Exercise context chip */}
+      <View style={s.exerciseChip}>
+        <FontAwesome name="check-circle" size={14} color={Colors.success} />
+        <Text style={s.exerciseChipText}>
+          {exerciseName} · {completedSetsCount} set{completedSetsCount !== 1 ? 's' : ''} done
+        </Text>
+      </View>
+
+      <Text style={s.title}>How was that exercise?</Text>
 
       {/* ── RPE Slider ───────────────────────────── */}
       <Text style={s.sectionLabel}>RPE (Rate of Perceived Exertion)</Text>
@@ -125,7 +141,7 @@ export function RPEModal({ visible, onSubmit, onSkip }: RPEModalProps) {
         style={s.notesInput}
         value={notes}
         onChangeText={setNotes}
-        placeholder="How did that set feel?"
+        placeholder="How did that exercise feel?"
         placeholderTextColor={Colors.textTertiary}
         multiline
         numberOfLines={2}
@@ -149,6 +165,23 @@ export function RPEModal({ visible, onSubmit, onSkip }: RPEModalProps) {
 }
 
 const s = StyleSheet.create({
+  exerciseChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 6,
+    backgroundColor: Colors.success + '14',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  exerciseChipText: {
+    color: Colors.success,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
   title: {
     color: Colors.textPrimary,
     fontSize: 22,
