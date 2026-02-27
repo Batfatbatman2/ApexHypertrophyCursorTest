@@ -1,0 +1,164 @@
+**Apex Hypertrophy — Complete Unified Feature Document v2.7**
+**Version:** 2.7
+**Date:** February 26, 2026
+**Overview**
+Apex Hypertrophy is the ulHmate premium hypertrophy training operaHng system built
+exclusively for serious liKers. It delivers gym-floor-opHmized workout logging, AI-powered
+adapHve programming, deep analyHcs, personalized coaching, and seamless progress tracking
+in one polished, cross-plaQorm experience available consistently on iOS, Android, and web.
+The app features a cinemaHc dark-mode interface with smooth 60 fps animaHons, rich hapHc
+feedback, glassmorphism elements, and micro-interacHons that feel premium and intuiHve even
+in busy gym environments. Every feature is Pro-exclusive behind a clean subscripHon model
+with a 7-day free trial—no free Her, no limited modes, no family sharing.
+**Core Principles**
+- Pro-only access with elegant paywalls and blurred teasers that highlight value
+- Oﬄine-first architecture with automaHc cloud synchronizaHon
+- AI transparency: every recommendaHon shows confidence percentage and step-by-step
+reasoning
+- CinemaHc, fricHonless UX designed for real-world training chaos
+- Full privacy compliance (GDPR/HIPAA) with user-controlled data rights
+- Consistent, beauHful experience across mobile and web plaQorms
+### 1. MoneHzaHon & Privacy
+- Pro subscripHon only ($9.99/month or $89/year annual billing) with 7-day free trial that auto-
+converts unless canceled
+- Elegant cinemaHc paywalls on every gated screen with blurred previews and one-tap upgrade
+flows
+- One-tap “Delete All My Data” that permanently wipes everything from local storage, cloud,
+and backups with full audit trail
+- One-click data export as structured JSON + beauHfully formaied PDF including charts and
+Hmelines
+- Granular consent toggles for analyHcs and data sharing
+- Biometric login (Face ID / Touch ID) for instant secure access
+- End-to-end encrypHon for all synced data
+### 2. User Onboarding
+- 8-step guided flow with progress bar and validaHon on every step
+- Collects: training age, primary goal (hypertrophy/strength/recomp/general fitness), equipment
+access, age, gender, bodyweight (with unit selecHon), preferred training days per week, and
+opHonal injury history
+- Seeds iniHal AI learning profile (volume zones, recovery esHmates) directly from onboarding
+answers
+- Back/skip navigaHon with hapHc feedback on every interacHon
+### 3. Home Screen
+- Hero card showing next scheduled workout (name, esHmated duraHon, exercise count) with
+prominent “Start Workout” buion
+- Weekly volume progress rings per major muscle group (real data vs customizable targets)
+- Horizontal “Coming Up” scroll of upcoming sessions
+- Boiom stat row: total workouts, lifeHme volume, PRs this week, current streak badge
+### 4. Workout Logging & ExecuHon
+- Start workout from Home hero or program schedule
+- Exercise-by-exercise guided flow with large bold headers and “Up Next” preview
+- Dynamic set table with columns: Set #, Previous (ghost), Weight, Reps, CompleHon checkbox
+- Four set types with disHnct icons/colors/animaHons:
+– Warmup (orange flame)
+– Working (red target/pulse)
+– Myo-Rep / Rest-Pause (cyan pause/breathing)
+– Drop Set (purple cascade arrow)
+- Ghost/AI inputs pre-filled from history that clear on first tap
+- Add, delete, or insert sets at any posiHon with smooth animaHons
+- One-tap “Mark Set Complete” with green checkmark and success hapHcs
+- Dynamic Mobility RouHne: auto-generated 3-minute joint-specific warm-up before first heavy
+compound (animated demos, Hmer, skippable)
+- Auto-Calculated Warm-Up Ramps: mathemaHcally progressive sets (50% × 10, 70% × 5, 85% ×
+2) that auto-populate and remain fully editable
+- Taken! Quick-Swap buion (lightning icon): one-tap replacement to closest anatomical
+alternaHve with Coach reasoning and confidence score; opHon to apply once or update program
+- Per-exercise or per-set free-text notes (searchable later)
+- AutomaHc Volume PR detecHon (weight × reps) with confex, mulH-stage hapHcs, and
+shareable celebraHon badge
+- Full session state preservaHon: survives app closure, crashes, or phone death and auto-
+resumes exactly where leK oﬀ
+- Navigate freely between exercises with next/previous controls
+### 5. RPE & Feedback Modal
+- Auto-appears aKer marking a set complete (skippable with gentle nudge)
+- RPE slider (6–10 with half steps, color gradient)
+- Muscle connecHon raHng (1–5 stars with sparkle animaHon)
+- OpHonal free-text notes
+- HapHc and visual feedback on every interacHon
+### 6. Rest Timer
+- Circular countdown with configurable duraHons (30 s to 5 min)
+- Auto-start aKer set compleHon (toggleable)
+- HapHc alerts at 10 s, 5 s, and 0 s remaining
+- Skip, extend, pause/resume controls
+- Persistent live countdown on device lock screen / dynamic island / noHficaHon center
+### 7. Workout Session Summary
+- Post-workout screen with full exercise breakdown, total volume, average RPE, session
+duraHon, and PR highlights
+- Live data (never mock)
+- Shareable summary with branding
+- Volume PR celebraHon if achieved during the session
+### 8. Program Management
+- List of all programs with acHve/inacHve toggle, edit, duplicate, and delete
+- Rolling schedule view with current-day highlight and rest-day integraHon
+- MulH-step creaHon wizard: Name → Goal → Equipment → Exercise selecHon → Workouts &
+volume review → Save
+- 211+ exercise library searchable/filterable by muscle group, movement paiern, equipment;
+includes SFR raHng, compound/isolaHon tags, and detailed cues
+- Custom exercise builder: create and tag new movements that instantly integrate into programs
+- Pre-built templates (PPL, Upper/Lower, Full Body, Bro Split) fully customizable before saving
+- Full ediHng mode: reorder workouts/exercises, swap movements, insert/remove rest days,
+adjust sets/reps
+- Manual ripple scheduling: “Insert rest day today” instantly shiKs enHre future schedule with
+visual Hmeline animaHon
+- Volume summary and MEV/MRV balance review before saving
+### 9. AI Coach & AdapHve Learning Engine
+- Personalized SHmulus-to-FaHgue RaHo (SFR) scoring per exercise: (PopSFR × 0.3) + (ConnecHon
+× 0.5) − (Pain × 0.2)
+- Exercise status: Proven, Experimental, Blacklisted (auto-blacklist on repeated high pain)
+- Seven core adapHve algorithms that run weekly:
+1. Volume Tolerance (MEV/MRV tracking per muscle)
+2. Recovery Rate (inserts rest days based on RPE trends)
+3. Exercise CompaHbility & Rehab BlacklisHng
+4. Technique EﬀecHveness (RPE vs reps analysis)
+5. Stress Impact (mulHplier from readiness data)
+6. Plateau RecogniHon & Automated Deload Builder
+7. Autonomy Progression (learns from successful user overrides)
+- User-specific learning profile with MEV, MRV, opHmal volume zone, volume sensiHvity,
+recovery hours, stress mulHplier, faHgue index
+- Learning phases: IniHal → CalibraHng → OpHmized → Plateau with confidence score
+- Daily Readiness Survey (60-second morning modal): soreness, sleep, stress/mood,
+energy/moHvaHon; auto-integrates with device health data where available
+- Weekly Coach Report (delivered Sunday night): headline summary, key improvements, volume
+heatmap vs MEV/MRV, top correlaHons, readiness trends, acHonable advice, and exportable
+PDF/image
+### 10. AnalyHcs & Progress Tracking
+- Dashboard: weekly volume bar chart, workout frequency, muscle distribuHon pie, strength
+progression lines, summary stat cards, recent history
+- Weekly volume progress rings on Home (real vs target per muscle)
+- Current & longest workout streak counter with last-workout tracking
+- Full history detail view: every set, RPE, connecHon raHng, notes, session stats
+- CorrelaHon engine: interacHve scaier plots (sleep vs strength, stress vs RPE, etc.) with AI-
+generated insights and confidence
+### 11. Personal Record (PR) Tracking
+- AutomaHc detecHon of Weight PR, Rep PR, and Volume PR (weight × reps) on every completed
+set
+- CelebraHon modal with confex and hapHcs on new records
+- PR history per exercise with dates, session links, and percentage improvement
+- PR counter and recent PRs widget on Home screen
+- Badge system (Weight / Rep / Volume)
+### 12. Sexngs & Preferences
+- Weight units (lbs/kg) with automaHc conversion everywhere
+- Default rest Hmer, auto-start, and hapHcs toggles
+- Custom weekly volume targets per muscle group (12 groups) with one-tap reset to defaults
+- Dark mode (system / light / dark)
+- Global hapHcs and noHficaHons toggles
+- Reset all sexngs or clear data opHons
+### 13. AuthenHcaHon & User Management
+- Secure login with biometric support
+- Persistent user profile (name, training age, goal, equipment, weight unit, etc.)
+- Profile ediHng and session management
+### 14. Data Persistence & SynchronizaHon
+- Local-first storage that works fully oﬄine
+- AutomaHc background sync when online
+- Smart conflict resoluHon (last-write-wins with manual merge fallback)
+- Pending operaHon queue with retry logic
+### 15. UI/UX & Design System
+- Consistent cinemaHc dark theme opHmized for OLED with red accent glows
+- Large touch targets, WCAG AA contrast, full accessibility support (screen readers, dynamic
+type, high-contrast)
+- Custom components: animated buions, progress rings, set rows, numeric inputs, modals,
+charts (bar/line/pie)
+- HapHc feedback mapped to every meaningful acHon
+- Parallax, glassmorphism, parHcle eﬀects, and fluid transiHons throughout
+This unified specificaHon represents the complete, producHon-ready feature set of Apex
+Hypertrophy v2.7—cross-plaQorm, privacy-first, and engineered from the ground up for the
+most serious hypertrophy athletes.
