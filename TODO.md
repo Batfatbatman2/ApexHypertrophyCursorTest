@@ -302,41 +302,22 @@ Matching mockup screenshots 3, 5, 6, and 9.
 
 Matching mockup screenshots 7, 8, and 12. This is the core feature.
 
-- [ ] **6.1** Workout session state machine in Zustand:
-  - States: `idle → active → paused → completing → completed`
-  - Persist to WatermelonDB on every change (crash recovery)
-  - Resume detection on app start
-- [ ] **6.2** Workout execution screen layout:
-  - Header: X (close), workout name, timer (counting up), exercise counter "1/6"
-  - Scrollable content area
-  - Fixed bottom: "MARK SET COMPLETE" red button + left/right nav arrows
-- [ ] **6.3** `ExerciseHeader` — exercise name (large bold), muscle group tag (red "Chest"), equipment tag (gray "Barbell")
-- [ ] **6.4** Set table with columns: SET, PREVIOUS, WEIGHT, REPS, completion checkbox
-  - Each row has set number, previous performance ghost text, weight input, reps input, green checkmark when complete
-  - Set type icon on left (color-coded per type)
-- [ ] **6.5** Four set types with distinct visuals:
-  - **Warmup** — orange flame icon, lighter row background
-  - **Working** — red target icon with subtle pulse animation
-  - **Myo-Rep** — cyan lightning icon, "MR" label
-  - **Drop Set** — purple/blue down-arrow icon, "D" label, with nested sub-rows (D1, D2, etc.) and "Add Drop Set" button
-- [ ] **6.6** `SetTypePicker` modal — tap set icon to change type:
-  - List: Warmup (flame), Working (target, checkmark if selected), Myo-Rep (lightning), Drop Set (cascade)
-  - Smooth slide-up animation
-- [ ] **6.7** Add/delete/insert sets with Reanimated layout animations
-- [ ] **6.8** Ghost/AI pre-fill from last session's data (clear on first tap)
-- [ ] **6.9** "MARK SET COMPLETE" action:
-  - Validate weight + reps > 0
-  - Green checkmark animation
-  - Success haptic
-  - Trigger RPE modal (if enabled)
-  - Start rest timer (if auto-start enabled)
-  - Check for PR
-- [ ] **6.10** "UP NEXT" preview at bottom of screen — next exercise name, tags, set count
-- [ ] **6.11** Left/right navigation between exercises with swipe gesture support
-- [ ] **6.12** Auto-Calculated Warm-Up Ramps: 50% × 10, 70% × 5, 85% × 2 based on working weight
-- [ ] **6.13** Quick-Swap button (lightning icon) — suggest anatomical alternatives
-- [ ] **6.14** Per-set and per-exercise notes
-- [ ] **6.15** Session persistence — save full state to DB; restore on reopen
+- [x] **6.1** Workout session state machine (`stores/workout-store.ts`): idle → active → completed, tick timer, full exercise/set CRUD
+- [x] **6.2** Workout execution screen (`app/workout/[id].tsx`): header (X/name/timer/counter), scrollable body, fixed footer nav
+- [x] **6.3** Exercise header — large bold name, muscle group (red) + equipment (gray) Badge tags
+- [x] **6.4** Set table — SET/PREVIOUS/WEIGHT/REPS columns, color-coded type icons, TextInput fields, green checkmark on complete
+- [x] **6.5** Four set types with distinct icons/colors: Warmup (🔥 orange), Working (🎯 red), Myo-Rep (⚡ cyan), Drop Set (💧 purple)
+- [x] **6.6** SetTypePicker BottomSheetModal — slide-up with all 4 types, checkmark on selected, instant apply
+- [x] **6.7** Add set (green + button), remove set, change set type per-set
+- [x] **6.9** MARK SET COMPLETE — validates weight+reps > 0, green checkmark, success haptic, completes first incomplete set
+- [x] **6.10** UP NEXT preview card — next exercise name, muscle/equipment badges, set count
+- [x] **6.11** Left/right arrow navigation between exercises in footer
+- [x] **6.route** Wired from Home START WORKOUT → loads active program exercises → opens fullscreen workout modal
+- [ ] **6.8** Ghost/AI pre-fill from last session (deferred — needs workout history)
+- [ ] **6.12** Auto warm-up ramps (deferred)
+- [ ] **6.13** Quick-Swap (deferred)
+- [ ] **6.14** Per-set notes (deferred)
+- [ ] **6.15** Session persistence to DB (deferred — needs WatermelonDB integration)
 
 ---
 

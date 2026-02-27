@@ -3,8 +3,12 @@ import { ScrollView, Text, View, RefreshControl, Pressable, StyleSheet } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
+import { router } from 'expo-router';
+
 import { Colors } from '@/constants/Colors';
 import { haptics } from '@/lib/haptics';
+import { useProgramStore } from '@/stores/program-store';
+import { useWorkoutStore, buildSetsForExercise } from '@/stores/workout-store';
 import {
   HeroWorkoutCard,
   WeeklyVolumeRings,
@@ -59,6 +63,45 @@ const MOCK_RECENT: RecentWorkoutItem[] = [
   { name: 'Push', date: 'Jan 16', duration: '1 min', sets: 4 },
 ];
 
+const MOCK_EXERCISES = [
+  {
+    exerciseName: 'Rear Delt Flyes',
+    muscleGroups: ['chest'],
+    equipment: 'barbell',
+    sets: buildSetsForExercise(3, 8),
+  },
+  {
+    exerciseName: 'Incline Dumbbell Press',
+    muscleGroups: ['chest'],
+    equipment: 'barbell',
+    sets: buildSetsForExercise(3, 10),
+  },
+  {
+    exerciseName: 'Pull-Ups',
+    muscleGroups: ['back'],
+    equipment: 'bodyweight',
+    sets: buildSetsForExercise(3, 8),
+  },
+  {
+    exerciseName: 'Lateral Raise',
+    muscleGroups: ['shoulders'],
+    equipment: 'dumbbell',
+    sets: buildSetsForExercise(3, 15),
+  },
+  {
+    exerciseName: 'Barbell Curl',
+    muscleGroups: ['biceps'],
+    equipment: 'barbell',
+    sets: buildSetsForExercise(3, 10),
+  },
+  {
+    exerciseName: 'Tricep Pushdown',
+    muscleGroups: ['triceps'],
+    equipment: 'cable',
+    sets: buildSetsForExercise(3, 12),
+  },
+];
+
 const MOCK_STATS: StatItem[] = [
   { value: '1', label: 'Workouts' },
   { value: '4', label: 'Total Sets' },
@@ -68,6 +111,29 @@ const MOCK_STATS: StatItem[] = [
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isRestDay, setIsRestDay] = useState(false);
+  const { getActiveProgram } = useProgramStore();
+  const { startWorkout } = useWorkoutStore();
+
+  const handleStartWorkout = useCallback(() => {
+    haptics.medium();
+    const program = getActiveProgram();
+    if (program) {
+      const firstWorkoutDay = program.workoutDays.find((d) => !d.isRestDay);
+      if (firstWorkoutDay) {
+        const exercises = firstWorkoutDay.exercises.map((ex) => ({
+          exerciseName: ex.exerciseName,
+          muscleGroups: ex.muscleGroups,
+          equipment: ex.equipment,
+          sets: buildSetsForExercise(ex.sets, ex.reps),
+        }));
+        startWorkout(firstWorkoutDay.name, exercises);
+        router.push('/workout/active');
+        return;
+      }
+    }
+    startWorkout('Push', MOCK_EXERCISES);
+    router.push('/workout/active');
+  }, [getActiveProgram, startWorkout]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -118,7 +184,7 @@ export default function HomeScreen() {
         <HeroWorkoutCard
           workout={MOCK_WORKOUT}
           isRestDay={isRestDay}
-          onStartWorkout={() => haptics.medium()}
+          onStartWorkout={handleStartWorkout}
         />
 
         {/* ── Weekly Volume ──────────────────────────── */}
