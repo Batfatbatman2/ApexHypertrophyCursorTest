@@ -8,8 +8,11 @@ import { Colors } from '@/constants/Colors';
 import { SET_TYPES, type SetType } from '@/constants/set-types';
 import { Button, Card, Badge, BottomSheetModal } from '@/components/ui';
 import { RPEModal } from '@/components/workout/RPEModal';
+import { RestTimer } from '@/components/workout/RestTimer';
 import { haptics } from '@/lib/haptics';
 import { useWorkoutStore, type ActiveSet } from '@/stores/workout-store';
+import { useTimerStore } from '@/stores/timer-store';
+import { useSettingsStore } from '@/stores/settings-store';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -24,6 +27,9 @@ export default function WorkoutScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [pickerSetId, setPickerSetId] = useState<string | null>(null);
   const [rpeSetId, setRpeSetId] = useState<string | null>(null);
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const restTimer = useTimerStore();
+  const { defaultRestDuration, autoStartTimer } = useSettingsStore();
 
   useEffect(() => {
     if (status === 'active') {
@@ -58,18 +64,31 @@ export default function WorkoutScreen() {
     [exercise, currentExerciseIndex, store],
   );
 
+  const startRestTimerIfEnabled = useCallback(() => {
+    if (autoStartTimer) {
+      restTimer.start(defaultRestDuration);
+      setShowRestTimer(true);
+    }
+  }, [autoStartTimer, defaultRestDuration, restTimer]);
+
   const handleRpeSubmit = useCallback(
     (rpe: number, muscleConnection: number, _notes: string) => {
       if (rpeSetId) {
         store.updateSet(currentExerciseIndex, rpeSetId, { rpe, muscleConnection });
       }
       setRpeSetId(null);
+      startRestTimerIfEnabled();
     },
-    [rpeSetId, currentExerciseIndex, store],
+    [rpeSetId, currentExerciseIndex, store, startRestTimerIfEnabled],
   );
 
   const handleRpeSkip = useCallback(() => {
     setRpeSetId(null);
+    startRestTimerIfEnabled();
+  }, [startRestTimerIfEnabled]);
+
+  const handleRestComplete = useCallback(() => {
+    setShowRestTimer(false);
   }, []);
 
   const handleCompleteFirstIncomplete = useCallback(() => {
@@ -250,6 +269,9 @@ export default function WorkoutScreen() {
 
       {/* ── RPE Feedback Modal ───────────────────── */}
       <RPEModal visible={rpeSetId !== null} onSubmit={handleRpeSubmit} onSkip={handleRpeSkip} />
+
+      {/* ── Rest Timer ───────────────────────────── */}
+      <RestTimer visible={showRestTimer} onComplete={handleRestComplete} />
     </SafeAreaView>
   );
 }

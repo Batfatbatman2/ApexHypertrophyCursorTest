@@ -338,19 +338,20 @@ Matching mockup screenshots 7, 8, and 12. This is the core feature.
 
 Matching mockup screenshot 13.
 
-- [ ] **8.1** Rest Timer overlay/modal:
-  - Large circular countdown ring (red, Skia-drawn)
-  - Time remaining in center (large "1:29" + "REMAINING" label)
-  - Quick Set duration buttons: 30s, 60s, 90s (selected = red fill), 2m, 3m
+- [x] **8.1** `RestTimer` component (`components/workout/RestTimer.tsx`):
+  - SVG circular countdown ring (red arc depleting over time)
+  - Large time remaining in center ("1:29" + "REMAINING" label)
+  - Quick Set buttons: 30s, 60s, 90s (default selected = red fill), 2m, 3m
   - Extend buttons: +15s, +30s, +60s (red outlined)
-  - "Skip" button (gray) + "Pause" button (red)
-- [ ] **8.2** Timer logic in Zustand store:
-  - Countdown with 100ms precision
-  - Auto-start option after set completion
-  - Configurable default duration from settings
-- [ ] **8.3** Haptic alerts at 10s, 5s, and 0s remaining
-- [ ] **8.4** Lock screen / notification persistence (expo-notifications for background)
-- [ ] **8.5** Timer survives navigation between screens
+  - "Skip" gray button + "Pause/Resume" red button
+- [x] **8.2** Timer store (`stores/timer-store.ts`):
+  - Zustand countdown with 1s tick interval
+  - Auto-start after RPE modal dismiss (respects `autoStartTimer` setting)
+  - Configurable duration from settings (`defaultRestDuration`)
+  - Pause/Resume toggle, skip, extend, setDuration
+- [x] **8.3** Haptic alerts: light at 10s, medium at 5s, heavy at 0s (timer complete)
+- [ ] **8.4** Lock screen / notification persistence (deferred — needs native expo-notifications)
+- [x] **8.5** Timer integrated into workout screen, auto-starts after RPE submit/skip
 
 ---
 
