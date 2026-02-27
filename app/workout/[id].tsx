@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -19,6 +19,8 @@ function formatTime(seconds: number): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
+
+type FooterAction = 'complete' | 'next' | 'finish';
 
 export default function WorkoutScreen() {
   const store = useWorkoutStore();
@@ -44,6 +46,15 @@ export default function WorkoutScreen() {
 
   const exercise = exercises[currentExerciseIndex];
   const nextExercise = exercises[currentExerciseIndex + 1];
+  const isLastExercise = currentExerciseIndex === exercises.length - 1;
+
+  const footerAction: FooterAction = useMemo(() => {
+    if (!exercise) return 'complete';
+    const allDone = exercise.sets.every((st) => st.isCompleted);
+    if (!allDone) return 'complete';
+    if (isLastExercise) return 'finish';
+    return 'next';
+  }, [exercise, isLastExercise]);
 
   const hasCompletedSets = useCallback(
     (exIndex: number) => exercises[exIndex]?.sets.some((s) => s.isCompleted) ?? false,
@@ -89,20 +100,6 @@ export default function WorkoutScreen() {
     },
     [currentExerciseIndex, hasCompletedSets, performNavigation],
   );
-
-  const handleFinishWorkout = useCallback(() => {
-    maybeShowRpeThenNavigate('finish');
-  }, [maybeShowRpeThenNavigate]);
-
-  const handleNextExercise = useCallback(() => {
-    haptics.light();
-    maybeShowRpeThenNavigate('next');
-  }, [maybeShowRpeThenNavigate]);
-
-  const handlePrevExercise = useCallback(() => {
-    haptics.light();
-    maybeShowRpeThenNavigate('prev');
-  }, [maybeShowRpeThenNavigate]);
 
   const handleCompleteSet = useCallback(
     (setId: string) => {
@@ -156,13 +153,18 @@ export default function WorkoutScreen() {
     setShowRestTimer(false);
   }, []);
 
-  const handleCompleteFirstIncomplete = useCallback(() => {
-    if (!exercise) return;
-    const incomplete = exercise.sets.find((st) => !st.isCompleted);
-    if (incomplete) {
-      handleCompleteSet(incomplete.id);
+  const handleFooterPress = useCallback(() => {
+    if (footerAction === 'complete') {
+      if (!exercise) return;
+      const incomplete = exercise.sets.find((st) => !st.isCompleted);
+      if (incomplete) handleCompleteSet(incomplete.id);
+    } else if (footerAction === 'next') {
+      haptics.light();
+      maybeShowRpeThenNavigate('next');
+    } else {
+      maybeShowRpeThenNavigate('finish');
     }
-  }, [exercise, handleCompleteSet]);
+  }, [footerAction, exercise, handleCompleteSet, maybeShowRpeThenNavigate]);
 
   if (status !== 'active' || !exercise) {
     return (
@@ -174,6 +176,13 @@ export default function WorkoutScreen() {
       </SafeAreaView>
     );
   }
+
+  const footerLabel =
+    footerAction === 'finish'
+      ? 'FINISH WORKOUT'
+      : footerAction === 'next'
+        ? 'NEXT EXERCISE'
+        : 'MARK SET COMPLETE';
 
   return (
     <SafeAreaView style={s.safe}>
@@ -254,17 +263,6 @@ export default function WorkoutScreen() {
             </View>
           </Card>
         )}
-
-        {/* Finish Workout */}
-        <View style={s.finishRow}>
-          <Button
-            title="FINISH WORKOUT"
-            variant="primary"
-            size="lg"
-            fullWidth
-            onPress={handleFinishWorkout}
-          />
-        </View>
       </ScrollView>
 
       {/* ── Rest Timer (compact bottom bar) ────── */}
@@ -272,41 +270,33 @@ export default function WorkoutScreen() {
 
       {/* ── Footer ───────────────────────────────── */}
       <View style={s.footer}>
-        <Pressable
-          onPress={handlePrevExercise}
-          style={s.navBtn}
-          disabled={currentExerciseIndex === 0}
-        >
-          <FontAwesome
-            name="chevron-left"
-            size={20}
-            color={currentExerciseIndex === 0 ? Colors.surfaceBorder : Colors.textSecondary}
-          />
-        </Pressable>
+        {/* Back nav — only when not on first exercise */}
+        {currentExerciseIndex > 0 && (
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              maybeShowRpeThenNavigate('prev');
+            }}
+            style={s.navBtn}
+          >
+            <FontAwesome name="chevron-left" size={16} color={Colors.textSecondary} />
+          </Pressable>
+        )}
 
         <Button
-          title="MARK SET COMPLETE"
-          variant="primary"
+          title={footerLabel}
+          variant={footerAction === 'finish' ? 'primary' : 'primary'}
           size="lg"
-          onPress={handleCompleteFirstIncomplete}
-          style={s.completeBtn}
+          onPress={handleFooterPress}
+          style={s.mainBtn}
+          icon={
+            footerAction === 'finish' ? (
+              <FontAwesome name="check" size={15} color="#FFF" />
+            ) : footerAction === 'next' ? (
+              <FontAwesome name="arrow-right" size={14} color="#FFF" />
+            ) : undefined
+          }
         />
-
-        <Pressable
-          onPress={handleNextExercise}
-          style={s.navBtn}
-          disabled={currentExerciseIndex === exercises.length - 1}
-        >
-          <FontAwesome
-            name="chevron-right"
-            size={20}
-            color={
-              currentExerciseIndex === exercises.length - 1
-                ? Colors.surfaceBorder
-                : Colors.textSecondary
-            }
-          />
-        </Pressable>
       </View>
 
       {/* ── Set Type Picker ──────────────────────── */}
@@ -573,8 +563,6 @@ const s = StyleSheet.create({
   upNextTags: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   upNextSets: { color: Colors.textSecondary, fontSize: 12 },
 
-  finishRow: { marginTop: 16, marginBottom: 8 },
-
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -582,15 +570,17 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 0.5,
     borderTopColor: Colors.divider,
-    gap: 8,
+    gap: 10,
   },
   navBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: Colors.surfaceLight,
   },
-  completeBtn: { flex: 1 },
+  mainBtn: { flex: 1 },
 
   pickerTitle: {
     color: Colors.textPrimary,

@@ -1,13 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  LayoutAnimation,
-  Platform,
-  UIManager,
-} from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,25 +15,16 @@ import { Colors } from '@/constants/Colors';
 import { haptics } from '@/lib/haptics';
 import { useTimerStore } from '@/stores/timer-store';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const QUICK_DURATIONS = [
+const DURATIONS = [
   { label: '30s', value: 30 },
-  { label: '60s', value: 60 },
-  { label: '90s', value: 90 },
+  { label: '1m', value: 60 },
+  { label: '1:30', value: 90 },
   { label: '2m', value: 120 },
   { label: '3m', value: 180 },
 ];
 
-const EXTEND_OPTIONS = [
-  { label: '+15s', value: 15 },
-  { label: '+30s', value: 30 },
-];
-
-const MINI_RING = 32;
-const MINI_STROKE = 3;
+const RING_SIZE = 44;
+const RING_STROKE = 3.5;
 
 function formatTimer(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -57,10 +40,8 @@ interface RestTimerProps {
 export function RestTimer({ visible, onComplete }: RestTimerProps) {
   const store = useTimerStore();
   const { isActive, isPaused, totalSeconds, remainingSeconds, selectedDuration } = store;
-  const [expanded, setExpanded] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const progress = useSharedValue(1);
   const barOpacity = useSharedValue(0);
 
@@ -91,7 +72,6 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
   useEffect(() => {
     if (!isActive && visible && remainingSeconds === 0 && totalSeconds > 0) {
       onComplete();
-      setExpanded(false);
     }
   }, [isActive, visible, remainingSeconds, totalSeconds, onComplete]);
 
@@ -102,7 +82,7 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
   const progressColorStyle = useAnimatedStyle(() => {
     const color = interpolateColor(
       progress.value,
-      [0, 0.25, 0.6, 1],
+      [0, 0.3, 0.7, 1],
       [Colors.accent, Colors.warmup, Colors.success, Colors.success],
     );
     return { backgroundColor: color };
@@ -110,125 +90,114 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: barOpacity.value,
-    transform: [{ translateY: (1 - barOpacity.value) * 20 }],
+    transform: [{ translateY: (1 - barOpacity.value) * 30 }],
   }));
 
-  const miniRadius = (MINI_RING - MINI_STROKE) / 2;
-  const miniCircum = 2 * Math.PI * miniRadius;
-  const miniProgress = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
-  const miniDashOffset = miniCircum * (1 - miniProgress);
-
-  const toggleExpand = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(!expanded);
-  };
+  const radius = (RING_SIZE - RING_STROKE) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const ringProgress = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
+  const dashOffset = circumference * (1 - ringProgress);
 
   if (!visible) return null;
 
   return (
     <Animated.View style={[s.wrapper, containerStyle]}>
-      {/* Progress track */}
-      <View style={s.progressTrack}>
+      {/* Top progress rail */}
+      <View style={s.progressRail}>
         <Animated.View style={[s.progressFill, progressBarStyle, progressColorStyle]} />
       </View>
 
-      {/* Compact bar */}
-      <Pressable style={s.bar} onPress={toggleExpand}>
-        {/* Mini ring + time */}
-        <View style={s.leftGroup}>
-          <View style={s.miniRingWrap}>
-            <Svg width={MINI_RING} height={MINI_RING}>
+      <View style={s.content}>
+        {/* Left: ring + countdown */}
+        <View style={s.timerGroup}>
+          <View style={s.ringWrap}>
+            <Svg width={RING_SIZE} height={RING_SIZE}>
               <Circle
-                cx={MINI_RING / 2}
-                cy={MINI_RING / 2}
-                r={miniRadius}
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={radius}
                 stroke={Colors.surfaceBorder}
-                strokeWidth={MINI_STROKE}
+                strokeWidth={RING_STROKE}
                 fill="none"
               />
               <Circle
-                cx={MINI_RING / 2}
-                cy={MINI_RING / 2}
-                r={miniRadius}
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={radius}
                 stroke={Colors.accent}
-                strokeWidth={MINI_STROKE}
+                strokeWidth={RING_STROKE}
                 fill="none"
-                strokeDasharray={`${miniCircum}`}
-                strokeDashoffset={miniDashOffset}
+                strokeDasharray={`${circumference}`}
+                strokeDashoffset={dashOffset}
                 strokeLinecap="round"
                 rotation={-90}
-                origin={`${MINI_RING / 2}, ${MINI_RING / 2}`}
+                origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
               />
             </Svg>
+            {/* Pause/play overlay inside ring */}
+            <Pressable
+              style={s.ringOverlay}
+              onPress={() => {
+                haptics.selection();
+                if (isPaused) store.resume();
+                else store.pause();
+              }}
+            >
+              <FontAwesome
+                name={isPaused ? 'play' : 'pause'}
+                size={13}
+                color={Colors.textPrimary}
+              />
+            </Pressable>
           </View>
 
           <View>
-            <Text style={s.timeText}>{formatTimer(remainingSeconds)}</Text>
-            <Text style={s.restLabel}>Rest</Text>
+            <Text style={s.countdown}>{formatTimer(remainingSeconds)}</Text>
+            <Text style={s.restLabel}>REST</Text>
           </View>
         </View>
 
-        {/* Quick actions */}
-        <View style={s.rightGroup}>
-          {EXTEND_OPTIONS.map((opt) => (
+        {/* Right: skip */}
+        <Pressable
+          onPress={() => {
+            store.skip();
+            onComplete();
+          }}
+          style={s.skipBtn}
+          hitSlop={8}
+        >
+          <Text style={s.skipText}>Skip</Text>
+          <FontAwesome name="angle-right" size={14} color={Colors.textTertiary} />
+        </Pressable>
+      </View>
+
+      {/* Duration selector — always visible, inline segmented control */}
+      <View style={s.durationRow}>
+        {DURATIONS.map((d) => {
+          const active = selectedDuration === d.value;
+          return (
             <Pressable
-              key={opt.value}
-              onPress={(e) => {
-                e.stopPropagation();
-                haptics.light();
-                store.extend(opt.value);
-              }}
-              style={s.extendChip}
+              key={d.value}
+              onPress={() => store.setDuration(d.value)}
+              style={[s.durChip, active && s.durChipActive]}
             >
-              <Text style={s.extendChipText}>{opt.label}</Text>
+              <Text style={[s.durChipText, active && s.durChipTextActive]}>{d.label}</Text>
             </Pressable>
-          ))}
+          );
+        })}
 
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              haptics.selection();
-              if (isPaused) store.resume();
-              else store.pause();
-            }}
-            style={s.controlBtn}
-          >
-            <FontAwesome name={isPaused ? 'play' : 'pause'} size={12} color="#FFF" />
-          </Pressable>
+        <View style={s.extendDivider} />
 
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              store.skip();
-              onComplete();
-              setExpanded(false);
-            }}
-            style={s.skipBtn}
-          >
-            <FontAwesome name="forward" size={12} color={Colors.textSecondary} />
-          </Pressable>
-        </View>
-      </Pressable>
-
-      {/* Expanded quick-set drawer */}
-      {expanded && (
-        <View style={s.expandedDrawer}>
-          <View style={s.quickRow}>
-            {QUICK_DURATIONS.map((d) => {
-              const active = selectedDuration === d.value;
-              return (
-                <Pressable
-                  key={d.value}
-                  onPress={() => store.setDuration(d.value)}
-                  style={[s.quickChip, active && s.quickChipActive]}
-                >
-                  <Text style={[s.quickChipText, active && s.quickChipTextActive]}>{d.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      )}
+        <Pressable
+          onPress={() => {
+            haptics.light();
+            store.extend(15);
+          }}
+          style={s.extendBtn}
+        >
+          <Text style={s.extendBtnText}>+15s</Text>
+        </Pressable>
+      </View>
     </Animated.View>
   );
 }
@@ -236,128 +205,129 @@ export function RestTimer({ visible, onComplete }: RestTimerProps) {
 const s = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: 80,
-    left: 12,
-    right: 12,
-    borderRadius: 16,
-    backgroundColor: Colors.surface,
+    bottom: 76,
+    left: 10,
+    right: 10,
+    borderRadius: 18,
+    backgroundColor: '#141414',
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: '#2A2A2A',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 16,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 20,
   },
 
-  progressTrack: {
+  progressRail: {
     height: 3,
-    backgroundColor: Colors.surfaceBorder,
+    backgroundColor: '#1F1F1F',
   },
   progressFill: {
     height: '100%',
     borderRadius: 2,
   },
 
-  bar: {
+  content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
 
-  leftGroup: {
+  timerGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
-  miniRingWrap: {
-    width: MINI_RING,
-    height: MINI_RING,
+  ringWrap: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    position: 'relative',
   },
-  timeText: {
+  ringOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countdown: {
     color: Colors.textPrimary,
-    fontSize: 17,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 20,
+    letterSpacing: -0.8,
+    lineHeight: 26,
   },
   restLabel: {
     color: Colors.textTertiary,
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    lineHeight: 13,
-  },
-
-  rightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  extendChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.accent + '66',
-    backgroundColor: Colors.accent + '12',
-  },
-  extendChipText: {
-    color: Colors.accent,
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '700',
+    letterSpacing: 1.5,
+    lineHeight: 12,
   },
 
-  controlBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   skipBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.surfaceLight,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#1E1E1E',
+  },
+  skipText: {
+    color: Colors.textTertiary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 
-  expandedDrawer: {
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.divider,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  quickRow: {
+  durationRow: {
     flexDirection: 'row',
-    gap: 6,
-    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 12,
+    gap: 4,
   },
-  quickChip: {
-    paddingHorizontal: 14,
+  durChip: {
+    flex: 1,
+    alignItems: 'center',
     paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceLight,
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+  },
+  durChipActive: {
+    backgroundColor: Colors.accent + '1A',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: Colors.accent + '44',
   },
-  quickChipActive: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
-  },
-  quickChipText: {
-    color: Colors.textSecondary,
+  durChipText: {
+    color: Colors.textTertiary,
     fontSize: 12,
     fontWeight: '700',
   },
-  quickChipTextActive: {
-    color: '#FFFFFF',
+  durChipTextActive: {
+    color: Colors.accent,
+  },
+
+  extendDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: '#2A2A2A',
+    marginHorizontal: 4,
+  },
+  extendBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.accent + '55',
+  },
+  extendBtnText: {
+    color: Colors.accent,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
