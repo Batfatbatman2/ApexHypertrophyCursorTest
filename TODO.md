@@ -357,15 +357,15 @@ Matching mockup screenshot 13.
 
 ## Phase 9: Workout Summary
 
-- [ ] **9.1** Post-workout summary screen:
+- [x] **9.1** Post-workout summary screen:
   - Total session duration
   - Total volume (weight × reps sum)
   - Total sets completed
   - Average RPE
   - Exercise-by-exercise breakdown
   - PR highlights with celebration badges
-- [ ] **9.2** PR celebration if new records achieved (confetti + haptics)
-- [ ] **9.3** Share summary as branded image
+- [x] **9.2** PR celebration if new records achieved (confetti + haptics)
+- [x] **9.3** Share summary as branded image
 
 ---
 
