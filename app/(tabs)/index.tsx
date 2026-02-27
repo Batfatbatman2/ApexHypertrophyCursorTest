@@ -1,7 +1,9 @@
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors } from '@/constants/Colors';
+import { Button, Card, SectionHeader, ProgressRing } from '@/components/ui';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -18,271 +20,211 @@ function formatDate(): string {
   });
 }
 
+const VOLUME_DATA = [
+  { name: 'BACK', current: 0, target: 18 },
+  { name: 'CHEST', current: 0, target: 16 },
+  { name: 'QUADS', current: 0, target: 16 },
+  { name: 'SHOULDERS', current: 0, target: 14 },
+];
+
+const COMING_UP = [
+  { day: 'TOMORROW', name: 'Pull Day A', exercises: 6, duration: 60 },
+  { day: 'THURSDAY', name: 'Legs Day A', exercises: 5, duration: 70 },
+  { day: 'FRIDAY', name: 'Push Day B', exercises: 6, duration: 60 },
+];
+
 export default function HomeScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView style={s.safe}>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        style={s.scroll}
+        contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting Header */}
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, marginTop: 8 }}>
+        {/* ── Header ─────────────────────────────────── */}
+        <Text style={s.greeting}>
           {getGreeting()} · {formatDate()}
         </Text>
-        <Text
-          style={{
-            color: Colors.textPrimary,
-            fontSize: 28,
-            fontWeight: '800',
-            marginTop: 4,
-            marginBottom: 20,
-          }}
-        >
-          Apex Hypertrophy
-        </Text>
+        <Text style={s.title}>Apex Hypertrophy</Text>
 
-        {/* Hero Workout Card */}
-        <View
-          style={{
-            backgroundColor: Colors.surface,
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 24,
-          }}
-        >
-          <Text
-            style={{
-              color: Colors.textSecondary,
-              fontSize: 11,
-              fontWeight: '700',
-              letterSpacing: 1.2,
-              textTransform: 'uppercase',
-              marginBottom: 8,
-            }}
-          >
-            UP NEXT · PUSH
-          </Text>
-          <Text
-            style={{
-              color: Colors.textPrimary,
-              fontSize: 28,
-              fontWeight: '800',
-              marginBottom: 4,
-            }}
-          >
-            Push
-          </Text>
-          <Text style={{ color: Colors.textSecondary, fontSize: 14, marginBottom: 12 }}>
-            6 exercises
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 16, marginBottom: 20 }}>
-            <Text style={{ color: Colors.textSecondary, fontSize: 13 }}>⏱ 48 min</Text>
-            <Text style={{ color: Colors.textSecondary, fontSize: 13 }}>🏋️ 6 exercises</Text>
-          </View>
-          <View
-            style={{
-              backgroundColor: Colors.accent,
-              borderRadius: 30,
-              paddingVertical: 16,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 1 }}>
-              START WORKOUT
-            </Text>
-          </View>
-        </View>
+        {/* ── Hero Workout Card ──────────────────────── */}
+        <Card variant="elevated" style={s.heroCard}>
+          <Text style={s.heroLabel}>UP NEXT · PUSH</Text>
+          <Text style={s.heroTitle}>Push</Text>
+          <Text style={s.heroSubtitle}>6 exercises</Text>
 
-        {/* Weekly Volume */}
-        <View style={{ marginBottom: 24 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ color: Colors.textPrimary, fontSize: 18, fontWeight: '700' }}>
-              Weekly Volume
-            </Text>
-            <Text style={{ color: Colors.accent, fontSize: 14, fontWeight: '600' }}>See All</Text>
-          </View>
-          <View
-            style={{
-              backgroundColor: Colors.surface,
-              borderRadius: 16,
-              padding: 20,
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-            }}
-          >
-            {[
-              { name: 'BACK', current: 0, target: 18 },
-              { name: 'CHEST', current: 0, target: 16 },
-              { name: 'QUADS', current: 0, target: 16 },
-              { name: 'SHOULDERS', current: 0, target: 14 },
-            ].map((muscle) => (
-              <View key={muscle.name} style={{ alignItems: 'center' }}>
-                <View
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 32,
-                    borderWidth: 3,
-                    borderColor: Colors.surfaceBorder,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: Colors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: '700',
-                    }}
-                  >
-                    {muscle.current}/{muscle.target}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    color: Colors.textSecondary,
-                    fontSize: 10,
-                    fontWeight: '600',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {muscle.name}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Coming Up */}
-        <View style={{ marginBottom: 24 }}>
-          <Text
-            style={{
-              color: Colors.textPrimary,
-              fontSize: 18,
-              fontWeight: '700',
-              marginBottom: 16,
-            }}
-          >
-            Coming Up
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View
-              style={{
-                backgroundColor: Colors.surface,
-                borderRadius: 12,
-                padding: 16,
-                marginRight: 12,
-                width: 140,
-              }}
-            >
-              <Text
-                style={{
-                  color: Colors.accent,
-                  fontSize: 11,
-                  fontWeight: '700',
-                  textTransform: 'uppercase',
-                  marginBottom: 6,
-                }}
-              >
-                TOMORROW
-              </Text>
-              <Text
-                style={{
-                  color: Colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  marginBottom: 4,
-                }}
-              >
-                Legs
-              </Text>
-              <Text style={{ color: Colors.textSecondary, fontSize: 12 }}>4 exercises</Text>
-              <Text style={{ color: Colors.textSecondary, fontSize: 12 }}>32 min</Text>
+          <View style={s.heroMeta}>
+            <View style={s.metaItem}>
+              <FontAwesome name="clock-o" size={13} color={Colors.textSecondary} />
+              <Text style={s.metaText}>48 min</Text>
             </View>
+            <View style={s.metaItem}>
+              <FontAwesome name="bolt" size={13} color={Colors.textSecondary} />
+              <Text style={s.metaText}>6 exercises</Text>
+            </View>
+          </View>
+
+          <Button title="START WORKOUT" variant="primary" size="lg" fullWidth />
+        </Card>
+
+        {/* ── Weekly Volume ──────────────────────────── */}
+        <View style={s.section}>
+          <SectionHeader title="Weekly Volume" actionLabel="See All" />
+          <Card>
+            <View style={s.ringsRow}>
+              {VOLUME_DATA.map((m) => (
+                <ProgressRing key={m.name} current={m.current} target={m.target} label={m.name} />
+              ))}
+            </View>
+          </Card>
+        </View>
+
+        {/* ── Coming Up ──────────────────────────────── */}
+        <View style={s.section}>
+          <SectionHeader title="Coming Up" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {COMING_UP.map((item, i) => (
+              <Card
+                key={item.name}
+                padding={16}
+                style={{
+                  ...s.comingCard,
+                  ...(i < COMING_UP.length - 1 ? { marginRight: 12 } : {}),
+                }}
+              >
+                <Text style={s.comingDay}>{item.day}</Text>
+                <Text style={s.comingName}>{item.name}</Text>
+                <Text style={s.comingDetail}>{item.exercises} exercises</Text>
+                <Text style={s.comingDetail}>{item.duration} min</Text>
+              </Card>
+            ))}
           </ScrollView>
         </View>
 
-        {/* Recent Workouts */}
-        <View style={{ marginBottom: 24 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ color: Colors.textPrimary, fontSize: 18, fontWeight: '700' }}>
-              Recent Workouts
-            </Text>
-            <Text style={{ color: Colors.accent, fontSize: 14, fontWeight: '600' }}>See All</Text>
-          </View>
-          <View
-            style={{
-              backgroundColor: Colors.surface,
-              borderRadius: 12,
-              padding: 16,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <View>
-              <Text
-                style={{
-                  color: Colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  marginBottom: 4,
-                }}
-              >
-                Push
-              </Text>
-              <Text style={{ color: Colors.textSecondary, fontSize: 12 }}>
-                Jan 16 · 1 min · 4 sets
-              </Text>
+        {/* ── Recent Workouts ────────────────────────── */}
+        <View style={s.section}>
+          <SectionHeader title="Recent Workouts" actionLabel="See All" />
+          <Card padding={16}>
+            <View style={s.recentRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.recentName}>Push</Text>
+                <Text style={s.recentMeta}>Jan 16 · 1 min · 4 sets</Text>
+              </View>
+              <FontAwesome name="chevron-right" size={12} color={Colors.textTertiary} />
             </View>
-            <Text style={{ color: Colors.textSecondary, fontSize: 18 }}>›</Text>
-          </View>
+          </Card>
         </View>
 
-        {/* Bottom Stats */}
-        <View
-          style={{
-            backgroundColor: Colors.surface,
-            borderRadius: 16,
-            padding: 20,
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-          }}
-        >
-          {[
-            { value: '1', label: 'Workouts' },
-            { value: '4', label: 'Total Sets' },
-            { value: '1', label: 'PRs Set' },
-          ].map((stat) => (
-            <View key={stat.label} style={{ alignItems: 'center' }}>
-              <Text
-                style={{ color: Colors.accent, fontSize: 24, fontWeight: '800', marginBottom: 4 }}
-              >
-                {stat.value}
-              </Text>
-              <Text style={{ color: Colors.textSecondary, fontSize: 11, fontWeight: '600' }}>
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
+        {/* ── Bottom Stats ───────────────────────────── */}
+        <Card>
+          <View style={s.statsRow}>
+            {[
+              { value: '1', label: 'Workouts' },
+              { value: '4', label: 'Total Sets' },
+              { value: '1', label: 'PRs Set' },
+            ].map((stat, i, arr) => (
+              <View key={stat.label} style={[s.statItem, i < arr.length - 1 && s.statDivider]}>
+                <Text style={s.statValue}>{stat.value}</Text>
+                <Text style={s.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: Colors.background },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 20, paddingBottom: 24 },
+
+  greeting: { color: Colors.textSecondary, fontSize: 14, marginTop: 12 },
+  title: {
+    color: Colors.textPrimary,
+    fontSize: 30,
+    fontWeight: '800',
+    marginTop: 4,
+    marginBottom: 24,
+    letterSpacing: -0.3,
+  },
+
+  heroCard: { marginBottom: 28 },
+  heroLabel: {
+    color: Colors.textTertiary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  heroTitle: {
+    color: Colors.textPrimary,
+    fontSize: 30,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: 15,
+    marginBottom: 16,
+  },
+  heroMeta: { flexDirection: 'row', gap: 20, marginBottom: 24 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaText: { color: Colors.textSecondary, fontSize: 13 },
+
+  section: { marginBottom: 28 },
+  ringsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+
+  comingCard: { width: 148 },
+  comingDay: {
+    color: Colors.accent,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  comingName: {
+    color: Colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  comingDetail: { color: Colors.textSecondary, fontSize: 12, lineHeight: 18 },
+
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recentName: {
+    color: Colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  recentMeta: { color: Colors.textSecondary, fontSize: 12 },
+
+  statsRow: { flexDirection: 'row' },
+  statItem: { flex: 1, alignItems: 'center', paddingVertical: 4 },
+  statDivider: {
+    borderRightWidth: 1,
+    borderRightColor: Colors.divider,
+  },
+  statValue: {
+    color: Colors.accent,
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  statLabel: {
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+});

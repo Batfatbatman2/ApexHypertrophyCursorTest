@@ -200,17 +200,19 @@ apex-hypertrophy/
 
 Build the reusable component library that every screen depends on.
 
-- [ ] **1.1** `Button` component — primary (red filled), secondary (outlined), ghost variants; press animation via Reanimated; haptic on press
-- [ ] **1.2** `Card` component — dark surface (`#1A1A1A`) with subtle border, rounded corners, optional red highlight border (see selected program card in mockup)
-- [ ] **1.3** `GlassmorphicCard` — frosted glass effect with blur + transparency for overlays
-- [ ] **1.4** `ProgressRing` (Skia) — circular SVG ring with animated fill, inner text (e.g., "0/18"), used in Weekly Volume section
-- [ ] **1.5** `Modal` component — bottom sheet style with backdrop blur, used for Set Type picker, RPE modal, Rest Timer
-- [ ] **1.6** `NumericInput` — large touch target number input for weight/reps fields
-- [ ] **1.7** `Badge` component — small colored label (e.g., "ACTIVE" green/red, "HYPERTROPHY" red, "Barbell" gray, "Compound" red)
-- [ ] **1.8** `TabBar` — custom bottom tab bar matching mockup: Home (house), Program (calendar), Analytics (bar chart), Settings (gear); red highlight for active tab
-- [ ] **1.9** `AnimatedCounter` — number that animates up/down on change (for stats)
-- [ ] **1.10** `SectionHeader` — "Weekly Volume" + "See All" red link pattern
-- [ ] **1.11** Haptic utility module — light (navigation), medium (set complete), heavy (PR celebration), selection (toggles)
+- [x] **1.1** `Button` — primary/secondary/ghost/danger variants, Reanimated spring press animation, haptic on press, sm/md/lg sizes (`components/ui/Button.tsx`)
+- [x] **1.2** `Card` — default/highlighted/elevated variants, dark surface `#1A1A1A`, configurable padding (`components/ui/Card.tsx`)
+- [x] **1.3** `GlassmorphicCard` — frosted glass effect with opacity + border for overlays (`components/ui/GlassmorphicCard.tsx`)
+- [x] **1.4** `ProgressRing` — SVG circular progress ring (react-native-svg), inner text "0/18", label below (`components/ui/ProgressRing.tsx`)
+- [x] **1.5** `BottomSheetModal` — slide-up bottom sheet with overlay + drag handle + keyboard avoiding (`components/ui/Modal.tsx`)
+- [x] **1.6** `NumericInput` — large touch target, focused border highlight, number-pad keyboard, label (`components/ui/NumericInput.tsx`)
+- [x] **1.7** `Badge` — accent/success/warning/error/muted/custom variants, sm/md sizes, uppercase text (`components/ui/Badge.tsx`)
+- [x] **1.8** `TabBar` — refined 4-tab layout with active icon background glow, proper spacing (`app/(tabs)/_layout.tsx`)
+- [x] **1.9** `AnimatedCounter` — numeric display with Reanimated-ready architecture (`components/ui/AnimatedCounter.tsx`)
+- [x] **1.10** `SectionHeader` — title + optional action label pattern, haptic on action press (`components/ui/SectionHeader.tsx`)
+- [x] **1.11** Haptic utility module — light/medium/heavy/selection/success/warning/error levels (`lib/haptics.ts`)
+- [x] **1.12** All 4 tab screens refactored to use UI primitives — premium polish, proper spacing, real data patterns matching mockups
+- [x] **1.13** Barrel export for all UI components (`components/ui/index.ts`)
 
 ---
 

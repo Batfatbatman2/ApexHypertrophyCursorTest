@@ -1,194 +1,238 @@
-import { ScrollView, Text, View, Pressable, Switch } from 'react-native';
+import { ScrollView, Text, View, Pressable, Switch, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors } from '@/constants/Colors';
+import { Card } from '@/components/ui';
+import { haptics } from '@/lib/haptics';
+import { useSettingsStore } from '@/stores/settings-store';
 
 export default function SettingsScreen() {
-  const [weightUnit, setWeightUnit] = useState<'lbs' | 'kg'>('lbs');
-  const [hapticsEnabled, setHapticsEnabled] = useState(true);
-  const [autoStartTimer, setAutoStartTimer] = useState(true);
+  const {
+    weightUnit,
+    setWeightUnit,
+    autoStartTimer,
+    setAutoStartTimer,
+    hapticsEnabled,
+    setHapticsEnabled,
+  } = useSettingsStore();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView style={s.safe}>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+        style={s.scroll}
+        contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={{
-            color: Colors.textPrimary,
-            fontSize: 28,
-            fontWeight: '800',
-            marginTop: 8,
-            marginBottom: 24,
-          }}
-        >
-          Settings
-        </Text>
+        <Text style={s.title}>Settings</Text>
 
-        {/* Units Section */}
-        <SectionTitle title="Units" />
-        <View
-          style={{
-            backgroundColor: Colors.surface,
-            borderRadius: 12,
-            marginBottom: 24,
-          }}
-        >
-          <SettingRow label="Weight Unit" isLast>
-            <View style={{ flexDirection: 'row', gap: 0 }}>
-              {(['lbs', 'kg'] as const).map((unit) => (
-                <Pressable
-                  key={unit}
-                  onPress={() => setWeightUnit(unit)}
-                  style={{
-                    backgroundColor: weightUnit === unit ? Colors.accent : Colors.surfaceLight,
-                    paddingHorizontal: 18,
-                    paddingVertical: 6,
-                    borderRadius: unit === 'lbs' ? 8 : 8,
-                    borderTopLeftRadius: unit === 'lbs' ? 8 : 0,
-                    borderBottomLeftRadius: unit === 'lbs' ? 8 : 0,
-                    borderTopRightRadius: unit === 'kg' ? 8 : 0,
-                    borderBottomRightRadius: unit === 'kg' ? 8 : 0,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: weightUnit === unit ? '#FFF' : Colors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: '700',
+        {/* ── Profile Card ───────────────────────────── */}
+        <Card variant="elevated" padding={16} style={s.profileCard}>
+          <View style={s.avatarCircle}>
+            <FontAwesome name="user" size={22} color={Colors.textSecondary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.profileName}>Athlete</Text>
+            <Text style={s.profileEmail}>Set up your profile</Text>
+          </View>
+          <FontAwesome name="chevron-right" size={12} color={Colors.textTertiary} />
+        </Card>
+
+        {/* ── Units ──────────────────────────────────── */}
+        <SectionLabel title="Units" />
+        <Card padding={0} style={s.group}>
+          <SettingRow label="Weight Unit" icon="balance-scale" isLast>
+            <View style={s.unitToggle}>
+              {(['lbs', 'kg'] as const).map((unit) => {
+                const active = weightUnit === unit;
+                return (
+                  <Pressable
+                    key={unit}
+                    onPress={() => {
+                      haptics.selection();
+                      setWeightUnit(unit);
                     }}
+                    style={[
+                      s.unitBtn,
+                      unit === 'lbs' && s.unitBtnLeft,
+                      unit === 'kg' && s.unitBtnRight,
+                      active && s.unitBtnActive,
+                    ]}
                   >
-                    {unit.toUpperCase()}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text style={[s.unitBtnText, active && s.unitBtnTextActive]}>
+                      {unit.toUpperCase()}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </SettingRow>
-        </View>
+        </Card>
 
-        {/* Rest Timer Section */}
-        <SectionTitle title="Rest Timer" />
-        <View
-          style={{
-            backgroundColor: Colors.surface,
-            borderRadius: 12,
-            marginBottom: 24,
-          }}
-        >
-          <SettingRow label="Default Duration">
-            <Text style={{ color: Colors.textSecondary, fontSize: 14 }}>90s</Text>
+        {/* ── Rest Timer ─────────────────────────────── */}
+        <SectionLabel title="Rest Timer" />
+        <Card padding={0} style={s.group}>
+          <SettingRow label="Default Duration" icon="clock-o">
+            <Text style={s.settingValue}>90s</Text>
           </SettingRow>
-          <SettingRow label="Auto-Start Timer" isLast>
+          <SettingRow label="Auto-Start Timer" icon="play-circle" isLast>
             <Switch
               value={autoStartTimer}
-              onValueChange={setAutoStartTimer}
+              onValueChange={(v) => {
+                haptics.selection();
+                setAutoStartTimer(v);
+              }}
               trackColor={{ false: Colors.surfaceLight, true: Colors.accent }}
               thumbColor="#FFFFFF"
             />
           </SettingRow>
-        </View>
+        </Card>
 
-        {/* General Section */}
-        <SectionTitle title="General" />
-        <View
-          style={{
-            backgroundColor: Colors.surface,
-            borderRadius: 12,
-            marginBottom: 24,
-          }}
-        >
-          <SettingRow label="Haptic Feedback">
+        {/* ── General ────────────────────────────────── */}
+        <SectionLabel title="General" />
+        <Card padding={0} style={s.group}>
+          <SettingRow label="Haptic Feedback" icon="hand-pointer-o">
             <Switch
               value={hapticsEnabled}
-              onValueChange={setHapticsEnabled}
+              onValueChange={(v) => {
+                haptics.selection();
+                setHapticsEnabled(v);
+              }}
               trackColor={{ false: Colors.surfaceLight, true: Colors.accent }}
               thumbColor="#FFFFFF"
             />
           </SettingRow>
-          <SettingRow label="Theme">
-            <Text style={{ color: Colors.textSecondary, fontSize: 14 }}>Dark</Text>
+          <SettingRow label="Theme" icon="moon-o">
+            <Text style={s.settingValue}>Dark</Text>
           </SettingRow>
-          <SettingRow label="Notifications" isLast>
-            <Text style={{ color: Colors.textSecondary, fontSize: 14 }}>On</Text>
+          <SettingRow label="Notifications" icon="bell-o" isLast>
+            <Text style={s.settingValue}>On</Text>
           </SettingRow>
-        </View>
+        </Card>
 
-        {/* Data Section */}
-        <SectionTitle title="Data" />
-        <View
-          style={{
-            backgroundColor: Colors.surface,
-            borderRadius: 12,
-            marginBottom: 24,
-          }}
-        >
-          <SettingRow label="Export Data">
-            <Text style={{ color: Colors.accent, fontSize: 14 }}>›</Text>
-          </SettingRow>
-          <SettingRow label="Delete All My Data" isLast>
-            <Text style={{ color: Colors.error, fontSize: 14 }}>›</Text>
-          </SettingRow>
-        </View>
+        {/* ── Data ───────────────────────────────────── */}
+        <SectionLabel title="Data" />
+        <Card padding={0} style={s.group}>
+          <SettingRow label="Export Data" icon="download" chevron />
+          <SettingRow label="Delete All My Data" icon="trash-o" danger isLast chevron />
+        </Card>
 
-        {/* Version */}
-        <Text
-          style={{
-            color: Colors.textTertiary,
-            fontSize: 12,
-            textAlign: 'center',
-            marginTop: 8,
-          }}
-        >
-          Apex Hypertrophy v1.0.0
-        </Text>
+        <Text style={s.version}>Apex Hypertrophy v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function SectionTitle({ title }: { title: string }) {
-  return (
-    <Text
-      style={{
-        color: Colors.textSecondary,
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 0.8,
-        textTransform: 'uppercase',
-        marginBottom: 8,
-      }}
-    >
-      {title}
-    </Text>
-  );
+function SectionLabel({ title }: { title: string }) {
+  return <Text style={s.sectionLabel}>{title}</Text>;
 }
 
 function SettingRow({
   label,
+  icon,
   children,
   isLast,
+  danger,
+  chevron,
 }: {
   label: string;
-  children: React.ReactNode;
+  icon?: React.ComponentProps<typeof FontAwesome>['name'];
+  children?: React.ReactNode;
   isLast?: boolean;
+  danger?: boolean;
+  chevron?: boolean;
 }) {
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderBottomWidth: isLast ? 0 : 0.5,
-        borderBottomColor: Colors.divider,
-      }}
-    >
-      <Text style={{ color: Colors.textPrimary, fontSize: 15 }}>{label}</Text>
-      {children}
+    <View style={[s.settingRow, !isLast && s.settingRowBorder]}>
+      {icon && (
+        <View style={s.settingIcon}>
+          <FontAwesome name={icon} size={14} color={danger ? Colors.error : Colors.textTertiary} />
+        </View>
+      )}
+      <Text style={[s.settingLabel, danger && { color: Colors.error }]}>{label}</Text>
+      <View style={s.settingRight}>
+        {children}
+        {chevron && (
+          <FontAwesome
+            name="chevron-right"
+            size={11}
+            color={danger ? Colors.error : Colors.textTertiary}
+          />
+        )}
+      </View>
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: Colors.background },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 20, paddingBottom: 40 },
+
+  title: {
+    color: Colors.textPrimary,
+    fontSize: 30,
+    fontWeight: '800',
+    marginTop: 12,
+    marginBottom: 24,
+    letterSpacing: -0.3,
+  },
+
+  profileCard: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 28 },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileName: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  profileEmail: { color: Colors.textSecondary, fontSize: 13, marginTop: 2 },
+
+  sectionLabel: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  group: { marginBottom: 24 },
+
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    gap: 12,
+  },
+  settingRowBorder: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.divider,
+  },
+  settingIcon: { width: 24, alignItems: 'center' },
+  settingLabel: { color: Colors.textPrimary, fontSize: 15, flex: 1 },
+  settingRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  settingValue: { color: Colors.textSecondary, fontSize: 14 },
+
+  unitToggle: { flexDirection: 'row' },
+  unitBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 7,
+    backgroundColor: Colors.surfaceLight,
+  },
+  unitBtnLeft: { borderTopLeftRadius: 8, borderBottomLeftRadius: 8 },
+  unitBtnRight: { borderTopRightRadius: 8, borderBottomRightRadius: 8 },
+  unitBtnActive: { backgroundColor: Colors.accent },
+  unitBtnText: { color: Colors.textSecondary, fontSize: 13, fontWeight: '700' },
+  unitBtnTextActive: { color: '#FFFFFF' },
+
+  version: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+});
