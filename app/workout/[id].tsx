@@ -6,7 +6,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors } from '@/constants/Colors';
 import { SET_TYPES, type SetType } from '@/constants/set-types';
-import { Button, Card, Badge, BottomSheetModal } from '@/components/ui';
+import { Button, Badge, BottomSheetModal } from '@/components/ui';
 import { RPEModal } from '@/components/workout/RPEModal';
 import { RestTimer } from '@/components/workout/RestTimer';
 import { PRToast } from '@/components/workout/PRToast';
@@ -21,6 +21,13 @@ function formatTime(seconds: number): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
+
+const SHORT_TYPE_LABELS: Record<SetType, string> = {
+  warmup: 'WARM',
+  working: 'WORK',
+  myoRep: 'MYO',
+  dropSet: 'DROP',
+};
 
 type FooterAction = 'complete' | 'next' | 'finish';
 
@@ -54,6 +61,11 @@ export default function WorkoutScreen() {
   const exercise = exercises[currentExerciseIndex];
   const nextExercise = exercises[currentExerciseIndex + 1];
   const isLastExercise = currentExerciseIndex === exercises.length - 1;
+
+  const firstIncompleteSetId = useMemo(() => {
+    if (!exercise) return null;
+    return exercise.sets.find((st) => !st.isCompleted)?.id ?? null;
+  }, [exercise]);
 
   const footerAction: FooterAction = useMemo(() => {
     if (!exercise) return 'complete';
@@ -204,7 +216,6 @@ export default function WorkoutScreen() {
 
   return (
     <View style={s.rootWrap}>
-      {/* ── PR Toast (rendered above SafeAreaView) ── */}
       <PRToast
         visible={prToast.visible}
         exerciseName={prToast.exerciseName}
@@ -214,16 +225,24 @@ export default function WorkoutScreen() {
       <SafeAreaView style={s.safe}>
         {/* ── Header ───────────────────────────────── */}
         <View style={s.header}>
-          <Pressable onPress={handleClose} hitSlop={12}>
-            <FontAwesome name="close" size={20} color={Colors.textSecondary} />
+          <Pressable onPress={handleClose} hitSlop={12} style={s.headerCloseBtn}>
+            <FontAwesome name="close" size={18} color={Colors.textSecondary} />
           </Pressable>
           <View style={s.headerCenter}>
-            <Text style={s.headerTitle}>{workoutName}</Text>
-            <Text style={s.headerTimer}>⏱ {formatTime(elapsedSeconds)}</Text>
+            <Text style={s.headerTitle} numberOfLines={1}>
+              {workoutName}
+            </Text>
+            <View style={s.headerSubRow}>
+              <Text style={s.headerTimer}>⏱ {formatTime(elapsedSeconds)}</Text>
+              <Text style={s.headerDot}> · </Text>
+              <Text style={s.headerExCount}>
+                Exercise {currentExerciseIndex + 1}/{exercises.length}
+              </Text>
+            </View>
           </View>
-          <Text style={s.headerCounter}>
-            {currentExerciseIndex + 1}/{exercises.length}
-          </Text>
+          <View style={s.headerBolt}>
+            <FontAwesome name="bolt" size={16} color="#FFD700" />
+          </View>
         </View>
 
         {/* ── Body ─────────────────────────────────── */}
@@ -236,58 +255,72 @@ export default function WorkoutScreen() {
           <Text style={s.exerciseName}>{exercise.exerciseName}</Text>
           <View style={s.tagRow}>
             {exercise.muscleGroups.slice(0, 2).map((m) => (
-              <Badge key={m} label={m} variant="accent" />
+              <Badge key={m} label={m} variant="outlined" size="md" />
             ))}
-            <Badge label={exercise.equipment} variant="muted" />
+            <Badge label={exercise.equipment} variant="outlinedMuted" size="md" />
           </View>
 
-          {/* Set Table Header */}
-          <View style={s.tableHeader}>
-            <Text style={[s.colHeader, s.colSet]}>SET</Text>
-            <Text style={[s.colHeader, s.colPrev]}>PREVIOUS</Text>
-            <Text style={[s.colHeader, s.colWeight]}>WEIGHT</Text>
-            <Text style={[s.colHeader, s.colReps]}>REPS</Text>
-            <View style={s.colCheck} />
+          {/* ── Set Table Card ──────────────────────── */}
+          <View style={s.setCard}>
+            {/* Column Headers */}
+            <View style={s.tableHeader}>
+              <Text style={[s.colHeader, s.colSet]}>SET</Text>
+              <Text style={[s.colHeader, s.colPrev]}>PREV</Text>
+              <Text style={[s.colHeader, s.colWeight]}>LBS</Text>
+              <Text style={[s.colHeader, s.colReps]}>REPS</Text>
+              <View style={s.colCheck} />
+            </View>
+
+            {/* Set Rows */}
+            {exercise.sets.map((set, idx) => (
+              <SetRowComponent
+                key={set.id}
+                set={set}
+                exerciseIndex={currentExerciseIndex}
+                isActive={set.id === firstIncompleteSetId}
+                isFuture={!set.isCompleted && set.id !== firstIncompleteSetId}
+                isLast={idx === exercise.sets.length - 1}
+                onTypeTap={() => setPickerSetId(set.id)}
+                onComplete={() => handleCompleteSet(set.id)}
+              />
+            ))}
           </View>
 
-          {/* Set Rows */}
-          {exercise.sets.map((set) => (
-            <SetRowComponent
-              key={set.id}
-              set={set}
-              exerciseIndex={currentExerciseIndex}
-              onTypeTap={() => setPickerSetId(set.id)}
-              onComplete={() => handleCompleteSet(set.id)}
-            />
-          ))}
+          {/* Add Set — dashed outline */}
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              store.addSet(currentExerciseIndex);
+            }}
+            style={s.addSetBtn}
+          >
+            <Text style={s.addSetPlus}>+</Text>
+            <Text style={s.addSetText}>ADD SET</Text>
+          </Pressable>
 
-          {/* Add Set */}
-          <View style={s.addRow}>
-            <Pressable
-              onPress={() => {
-                haptics.light();
-                store.addSet(currentExerciseIndex);
-              }}
-              style={s.addSetBtn}
-            >
-              <FontAwesome name="plus-circle" size={14} color={Colors.success} />
-              <Text style={s.addSetText}>Add Set</Text>
-            </Pressable>
-          </View>
-
-          {/* Up Next Preview */}
+          {/* Up Next Preview — dashed outline */}
           {nextExercise && (
-            <Card padding={16} style={s.upNextCard}>
+            <View style={s.upNextOuter}>
               <Text style={s.upNextLabel}>UP NEXT</Text>
-              <Text style={s.upNextName}>{nextExercise.exerciseName}</Text>
-              <View style={s.upNextTags}>
-                {nextExercise.muscleGroups.slice(0, 2).map((m) => (
-                  <Badge key={m} label={m} variant="accent" />
-                ))}
-                <Badge label={nextExercise.equipment} variant="muted" />
-                <Text style={s.upNextSets}>{nextExercise.sets.length} sets</Text>
-              </View>
-            </Card>
+              <Pressable
+                onPress={() => {
+                  haptics.light();
+                  maybeShowRpeThenNavigate('next');
+                }}
+                style={s.upNextCard}
+              >
+                <View style={s.upNextLeft}>
+                  <Text style={s.upNextName}>{nextExercise.exerciseName}</Text>
+                  <View style={s.upNextTags}>
+                    <Badge label={nextExercise.equipment} variant="outlinedMuted" />
+                    <Text style={s.upNextSets}>{nextExercise.sets.length} sets</Text>
+                  </View>
+                </View>
+                <View style={s.upNextArrow}>
+                  <FontAwesome name="chevron-right" size={14} color={Colors.textTertiary} />
+                </View>
+              </Pressable>
+            </View>
           )}
         </ScrollView>
 
@@ -296,33 +329,41 @@ export default function WorkoutScreen() {
 
         {/* ── Footer ───────────────────────────────── */}
         <View style={s.footer}>
-          {/* Back nav — only when not on first exercise */}
-          {currentExerciseIndex > 0 && (
-            <Pressable
-              onPress={() => {
+          <Pressable
+            onPress={() => {
+              if (currentExerciseIndex > 0) {
                 haptics.light();
                 maybeShowRpeThenNavigate('prev');
-              }}
-              style={s.navBtn}
-            >
-              <FontAwesome name="chevron-left" size={16} color={Colors.textSecondary} />
-            </Pressable>
-          )}
+              }
+            }}
+            style={[s.navBtn, currentExerciseIndex === 0 && s.navBtnDisabled]}
+          >
+            <FontAwesome
+              name="chevron-left"
+              size={14}
+              color={currentExerciseIndex > 0 ? Colors.textPrimary : Colors.textTertiary}
+            />
+          </Pressable>
 
-          <Button
-            title={footerLabel}
-            variant={footerAction === 'finish' ? 'primary' : 'primary'}
-            size="lg"
-            onPress={handleFooterPress}
-            style={s.mainBtn}
-            icon={
-              footerAction === 'finish' ? (
-                <FontAwesome name="check" size={15} color="#FFF" />
-              ) : footerAction === 'next' ? (
-                <FontAwesome name="arrow-right" size={14} color="#FFF" />
-              ) : undefined
-            }
-          />
+          <Pressable onPress={handleFooterPress} style={s.mainActionBtn}>
+            <Text style={s.mainActionText}>{footerLabel}</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              if (!isLastExercise) {
+                haptics.light();
+                maybeShowRpeThenNavigate('next');
+              }
+            }}
+            style={[s.navBtn, isLastExercise && s.navBtnDisabled]}
+          >
+            <FontAwesome
+              name="chevron-right"
+              size={14}
+              color={!isLastExercise ? Colors.textPrimary : Colors.textTertiary}
+            />
+          </Pressable>
         </View>
 
         {/* ── Set Type Picker ──────────────────────── */}
@@ -372,78 +413,144 @@ export default function WorkoutScreen() {
 }
 
 /* ═══════════════════════════════════════════════════
-   SetRow Component
+   SetRow Component — Redesigned to match mockup
    ═══════════════════════════════════════════════════ */
 function SetRowComponent({
   set,
   exerciseIndex,
+  isActive,
+  isFuture,
+  isLast,
   onTypeTap,
   onComplete,
 }: {
   set: ActiveSet;
   exerciseIndex: number;
+  isActive: boolean;
+  isFuture: boolean;
+  isLast: boolean;
   onTypeTap: () => void;
   onComplete: () => void;
 }) {
   const store = useWorkoutStore();
   const config = SET_TYPES[set.setType] || SET_TYPES.working;
   const isDropChild = set.parentSetId !== null;
+  const typeLabel = SHORT_TYPE_LABELS[set.setType];
+
+  const rowStyle = [
+    s.setRow,
+    !isLast && s.setRowBorder,
+    isDropChild && s.setRowIndented,
+    isActive && s.setRowActive,
+  ];
 
   return (
-    <View style={[s.setRow, set.isCompleted && s.setRowCompleted, isDropChild && s.setRowIndented]}>
-      {/* Type Icon */}
+    <View style={rowStyle}>
+      {/* ── Type Icon + Label ── */}
       <Pressable onPress={onTypeTap} style={s.colSet}>
-        <View style={[s.typeIcon, { borderColor: config.color }]}>
-          <Text style={{ fontSize: 12 }}>{config.icon}</Text>
-        </View>
-        <Text style={[s.setNum, { color: config.color }]}>
-          {isDropChild ? `D${set.setNumber}` : set.setNumber}
+        {set.setType === 'warmup' ? (
+          <View style={[s.typeIconCircle, { backgroundColor: config.color + '1A' }]}>
+            <Text style={{ fontSize: 14 }}>{config.icon}</Text>
+          </View>
+        ) : set.setType === 'dropSet' ? (
+          <View style={[s.typeIconCircle, { backgroundColor: config.color + '1A' }]}>
+            <Text style={{ fontSize: 14 }}>{config.icon}</Text>
+          </View>
+        ) : (
+          <View
+            style={[
+              s.typeNumCircle,
+              {
+                borderColor: isActive
+                  ? config.color
+                  : isFuture
+                    ? Colors.textTertiary
+                    : config.color,
+                backgroundColor: isActive ? config.color + '1A' : 'transparent',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                s.typeNumText,
+                {
+                  color: isActive ? config.color : isFuture ? Colors.textTertiary : config.color,
+                },
+              ]}
+            >
+              {isDropChild ? `D${set.setNumber}` : set.setNumber}
+            </Text>
+          </View>
+        )}
+        <Text
+          style={[
+            s.typeLabelText,
+            {
+              color: isFuture ? Colors.textTertiary : config.color,
+            },
+          ]}
+        >
+          {typeLabel}
         </Text>
       </Pressable>
 
-      {/* Previous */}
-      <Text style={[s.colPrev, s.prevText]}>—</Text>
+      {/* ── Previous ── */}
+      <View style={s.colPrev}>
+        <Text style={[s.prevText, isFuture && s.prevTextDim]}>
+          {set.isCompleted ? `${set.weight} × ${set.reps}` : '—'}
+        </Text>
+      </View>
 
-      {/* Weight */}
+      {/* ── Weight Input ── */}
       <View style={s.colWeight}>
         <TextInput
-          style={s.numInput}
+          style={[
+            s.numInput,
+            isActive && s.numInputActive,
+            set.isCompleted && s.numInputCompleted,
+            isFuture && s.numInputFuture,
+          ]}
           value={set.weight > 0 ? String(set.weight) : ''}
           onChangeText={(t) =>
             store.updateSet(exerciseIndex, set.id, { weight: parseInt(t, 10) || 0 })
           }
-          placeholder="0"
-          placeholderTextColor={Colors.textTertiary}
+          placeholder="—"
+          placeholderTextColor={isFuture ? Colors.textTertiary + '60' : Colors.textTertiary}
           keyboardType="number-pad"
           selectTextOnFocus
+          editable={!set.isCompleted}
         />
-        <Text style={s.unitLabel}>LBS</Text>
       </View>
 
-      {/* Reps */}
+      {/* ── Reps Input ── */}
       <View style={s.colReps}>
         <TextInput
-          style={s.numInput}
+          style={[
+            s.numInput,
+            isActive && s.numInputActive,
+            set.isCompleted && s.numInputCompleted,
+            isFuture && s.numInputFuture,
+          ]}
           value={set.reps > 0 ? String(set.reps) : ''}
           onChangeText={(t) =>
             store.updateSet(exerciseIndex, set.id, { reps: parseInt(t, 10) || 0 })
           }
-          placeholder="0"
-          placeholderTextColor={Colors.textTertiary}
+          placeholder="—"
+          placeholderTextColor={isFuture ? Colors.textTertiary + '60' : Colors.textTertiary}
           keyboardType="number-pad"
           selectTextOnFocus
+          editable={!set.isCompleted}
         />
-        <Text style={s.unitLabel}>REPS</Text>
       </View>
 
-      {/* Checkbox */}
-      <Pressable onPress={onComplete} style={s.colCheck}>
+      {/* ── Checkbox ── */}
+      <Pressable onPress={onComplete} style={s.colCheck} hitSlop={6}>
         {set.isCompleted ? (
           <View style={s.checkDone}>
-            <FontAwesome name="check" size={14} color="#FFF" />
+            <FontAwesome name="check" size={13} color="#FFF" />
           </View>
         ) : (
-          <View style={s.checkEmpty} />
+          <View style={[s.checkEmpty, isFuture && s.checkEmptyDim]} />
         )}
       </Pressable>
     </View>
@@ -451,7 +558,7 @@ function SetRowComponent({
 }
 
 /* ═══════════════════════════════════════════════════
-   Styles
+   Styles — Premium dark UI matching mockup
    ═══════════════════════════════════════════════════ */
 const s = StyleSheet.create({
   rootWrap: { flex: 1, position: 'relative' },
@@ -459,96 +566,182 @@ const s = StyleSheet.create({
   emptyCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   emptyText: { color: Colors.textSecondary, fontSize: 16 },
 
+  /* ── Header ── */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.divider,
+    paddingVertical: 14,
+  },
+  headerCloseBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  headerTimer: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
-  headerCounter: { color: Colors.accent, fontSize: 15, fontWeight: '800' },
+  headerTitle: {
+    color: Colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  headerSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  headerTimer: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500' },
+  headerDot: { color: Colors.textTertiary, fontSize: 12 },
+  headerExCount: { color: Colors.accent, fontSize: 12, fontWeight: '700' },
+  headerBolt: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
+  /* ── Body ── */
   body: { flex: 1 },
-  bodyContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
+  bodyContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 32 },
 
   exerciseName: {
     color: Colors.textPrimary,
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
-    letterSpacing: -0.3,
-    marginBottom: 10,
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
-  tagRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
+  tagRow: { flexDirection: 'row', gap: 8, marginBottom: 28 },
 
+  /* ── Set Table Card ── */
+  setCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingTop: 14,
+    paddingBottom: 4,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+  },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 10,
-    marginBottom: 4,
+    paddingBottom: 12,
+    marginBottom: 2,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.divider,
   },
   colHeader: {
     color: Colors.textTertiary,
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
-  colSet: { width: 48, alignItems: 'center' },
-  colPrev: { width: 60, textAlign: 'center' },
+
+  colSet: { width: 50, alignItems: 'center' },
+  colPrev: { width: 70, alignItems: 'center' },
   colWeight: { flex: 1, alignItems: 'center' },
   colReps: { flex: 1, alignItems: 'center' },
   colCheck: { width: 40, alignItems: 'center' },
 
+  /* ── Set Row ── */
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.divider,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginVertical: 2,
+    paddingHorizontal: 4,
   },
-  setRowCompleted: { opacity: 0.6 },
-  setRowIndented: { paddingLeft: 16 },
+  setRowBorder: {},
+  setRowIndented: { paddingLeft: 8 },
+  setRowActive: {
+    backgroundColor: 'rgba(255, 45, 45, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 45, 45, 0.3)',
+    shadowColor: '#FF2D2D',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
 
-  typeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  /* ── Type Icon ── */
+  typeIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeNumCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
   },
-  setNum: { fontSize: 10, fontWeight: '700' },
+  typeNumText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  typeLabelText: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginTop: 1,
+  },
 
-  prevText: { color: Colors.textTertiary, fontSize: 14 },
+  /* ── Previous ── */
+  prevText: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  prevTextDim: {
+    opacity: 0.4,
+  },
 
+  /* ── Numeric Inputs ── */
   numInput: {
     backgroundColor: Colors.surfaceLight,
-    borderRadius: 8,
+    borderRadius: 10,
     color: Colors.textPrimary,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
-    width: 60,
-    paddingVertical: 8,
+    width: 58,
+    height: 42,
+    paddingVertical: 0,
   },
-  unitLabel: {
-    color: Colors.textTertiary,
-    fontSize: 9,
-    fontWeight: '600',
-    marginTop: 3,
-    letterSpacing: 0.3,
+  numInputActive: {
+    backgroundColor: 'rgba(255, 45, 45, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 45, 45, 0.25)',
+    color: Colors.textPrimary,
+  },
+  numInputCompleted: {
+    backgroundColor: Colors.surfaceLight,
+    opacity: 0.8,
+  },
+  numInputFuture: {
+    backgroundColor: Colors.surfaceLight + '66',
+    opacity: 0.5,
   },
 
+  /* ── Checkbox ── */
   checkEmpty: {
     width: 28,
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: Colors.surfaceBorder,
+    borderColor: '#333333',
+  },
+  checkEmptyDim: {
+    borderColor: '#2A2A2A',
+    opacity: 0.5,
   },
   checkDone: {
     width: 28,
@@ -559,29 +752,52 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  addRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 12,
-    marginBottom: 24,
-  },
+  /* ── Add Set Button ── */
   addSetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 28,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.surfaceBorder,
+    borderStyle: 'dashed',
   },
-  addSetText: { color: Colors.success, fontSize: 14, fontWeight: '600' },
+  addSetPlus: {
+    color: Colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  addSetText: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
 
-  upNextCard: { marginBottom: 8 },
+  /* ── Up Next ── */
+  upNextOuter: { marginBottom: 8 },
   upNextLabel: {
     color: Colors.textTertiary,
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 6,
+    letterSpacing: 1.2,
+    marginBottom: 10,
   },
+  upNextCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.surfaceBorder,
+    borderStyle: 'dashed',
+  },
+  upNextLeft: { flex: 1 },
   upNextName: {
     color: Colors.textPrimary,
     fontSize: 17,
@@ -589,27 +805,58 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   upNextTags: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  upNextSets: { color: Colors.textSecondary, fontSize: 12 },
+  upNextSets: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500' },
+  upNextArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
+  /* ── Footer ── */
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.divider,
-    gap: 10,
+    paddingVertical: 14,
+    gap: 12,
   },
   navBtn: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: Colors.surfaceLight,
+    borderRadius: 24,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
   },
-  mainBtn: { flex: 1 },
+  navBtnDisabled: {
+    opacity: 0.35,
+  },
+  mainActionBtn: {
+    flex: 1,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF2D2D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  mainActionText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
 
+  /* ── Picker ── */
   pickerTitle: {
     color: Colors.textPrimary,
     fontSize: 20,
