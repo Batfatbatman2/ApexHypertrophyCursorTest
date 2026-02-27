@@ -11,6 +11,7 @@ import { ShareableCard, ShareSummaryButton } from '@/components/workout/ShareSum
 import { getPRDisplayList } from '@/lib/pr-detection';
 import { haptics } from '@/lib/haptics';
 import { useWorkoutStore, type ExerciseSummary } from '@/stores/workout-store';
+import { useHistoryStore } from '@/stores/history-store';
 import { useSettingsStore } from '@/stores/settings-store';
 
 function formatDuration(seconds: number): string {
@@ -24,10 +25,17 @@ function formatDuration(seconds: number): string {
 
 export default function WorkoutSummaryScreen() {
   const { completedSummary, reset } = useWorkoutStore();
+  const addToHistory = useHistoryStore((s) => s.addWorkout);
   const { weightUnit } = useSettingsStore();
   const unit = weightUnit.toUpperCase();
   const [showConfetti, setShowConfetti] = useState(true);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
+  const [persisted, setPersisted] = useState(false);
+
+  if (completedSummary && !persisted) {
+    addToHistory(completedSummary);
+    setPersisted(true);
+  }
 
   const prDisplayList = useMemo(
     () => (completedSummary ? getPRDisplayList(completedSummary.prs, unit) : []),
