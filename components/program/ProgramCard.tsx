@@ -10,6 +10,7 @@ import type { ProgramData } from '@/stores/program-store';
 interface ProgramCardProps {
   program: ProgramData;
   onEdit?: () => void;
+  onDuplicate?: () => void;
   onDelete?: () => void;
   onSetActive?: () => void;
 }
@@ -21,7 +22,13 @@ const GOAL_LABELS: Record<string, string> = {
   general: 'GENERAL',
 };
 
-export function ProgramCard({ program, onEdit, onDelete, onSetActive }: ProgramCardProps) {
+export function ProgramCard({
+  program,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onSetActive,
+}: ProgramCardProps) {
   const totalExercises = program.workoutDays.reduce((sum, d) => sum + d.exercises.length, 0);
   const workoutCount = program.workoutDays.filter((d) => !d.isRestDay).length;
 
@@ -72,6 +79,16 @@ export function ProgramCard({ program, onEdit, onDelete, onSetActive }: ProgramC
         >
           <FontAwesome name="pencil" size={13} color={Colors.textSecondary} />
           <Text style={s.actionText}>Edit</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            haptics.light();
+            onDuplicate?.();
+          }}
+          style={s.actionBtn}
+        >
+          <FontAwesome name="clone" size={13} color={Colors.textSecondary} />
+          <Text style={s.actionText}>Duplicate</Text>
         </Pressable>
         <Pressable
           onPress={() => {

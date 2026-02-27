@@ -19,7 +19,8 @@ const genDayId = () => `wd-${dayCounter++}`;
 
 export default function CreateProgramScreen() {
   const store = useProgramStore();
-  const { wizard } = store;
+  const { wizard, editingProgramId } = store;
+  const isEditing = editingProgramId !== null;
   const [step, setStep] = useState(0);
   const progress = (step + 1) / STEPS.length;
 
@@ -65,7 +66,7 @@ export default function CreateProgramScreen() {
             <View style={{ width: 18 }} />
           )}
         </Pressable>
-        <Text style={s.headerTitle}>Create Program</Text>
+        <Text style={s.headerTitle}>{isEditing ? 'Edit Program' : 'Create Program'}</Text>
         <Pressable onPress={handleClose} hitSlop={12}>
           <FontAwesome name="close" size={18} color={Colors.textSecondary} />
         </Pressable>
@@ -104,7 +105,9 @@ export default function CreateProgramScreen() {
       {/* ── Footer ───────────────────────────────── */}
       <View style={s.footer}>
         <Button
-          title={step === STEPS.length - 1 ? 'SAVE PROGRAM' : 'CONTINUE'}
+          title={
+            step === STEPS.length - 1 ? (isEditing ? 'SAVE CHANGES' : 'SAVE PROGRAM') : 'CONTINUE'
+          }
           variant="primary"
           size="lg"
           fullWidth

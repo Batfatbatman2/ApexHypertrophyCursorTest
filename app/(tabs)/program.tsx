@@ -19,7 +19,8 @@ const SCHEDULE_DAYS = [
 ];
 
 export default function ProgramScreen() {
-  const { programs, removeProgram, setActive } = useProgramStore();
+  const { programs, removeProgram, setActive, duplicateProgram, loadProgramForEdit } =
+    useProgramStore();
 
   const handleCreate = () => {
     haptics.light();
@@ -69,6 +70,15 @@ export default function ProgramScreen() {
               onSetActive={() => {
                 haptics.medium();
                 setActive(p.id);
+              }}
+              onEdit={() => {
+                haptics.light();
+                loadProgramForEdit(p.id);
+                router.push('/program/create');
+              }}
+              onDuplicate={() => {
+                haptics.success();
+                duplicateProgram(p.id);
               }}
               onDelete={() => {
                 haptics.warning();

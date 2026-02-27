@@ -41,12 +41,16 @@ interface WizardState {
 interface ProgramState {
   programs: ProgramData[];
   wizard: WizardState;
+  editingProgramId: string | null;
 
   addProgram: (program: ProgramData) => void;
+  updateProgram: (id: string, updates: Partial<Omit<ProgramData, 'id' | 'createdAt'>>) => void;
   removeProgram: (id: string) => void;
+  duplicateProgram: (id: string) => void;
   setActive: (id: string) => void;
   getActiveProgram: () => ProgramData | undefined;
 
+  loadProgramForEdit: (id: string) => void;
   setWizardStep: (step: number) => void;
   setWizardName: (name: string) => void;
   setWizardDescription: (desc: string) => void;
@@ -55,6 +59,7 @@ interface ProgramState {
   removeWizardDay: (id: string) => void;
   reorderWizardDay: (id: string, direction: 'up' | 'down') => void;
   addExerciseToDay: (dayId: string, exercise: WorkoutExercise) => void;
+  removeExerciseFromDay: (dayId: string, exerciseIndex: number) => void;
   resetWizard: () => void;
   finishWizard: () => void;
 }
@@ -181,15 +186,47 @@ const DEMO_PROGRAMS: ProgramData[] = [
 export const useProgramStore = create<ProgramState>((set, get) => ({
   programs: DEMO_PROGRAMS,
   wizard: { ...INITIAL_WIZARD },
+  editingProgramId: null,
 
   addProgram: (program) => set((s) => ({ programs: [...s.programs, program] })),
+  updateProgram: (id, updates) =>
+    set((s) => ({
+      programs: s.programs.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    })),
   removeProgram: (id) => set((s) => ({ programs: s.programs.filter((p) => p.id !== id) })),
+  duplicateProgram: (id) => {
+    const program = get().programs.find((p) => p.id === id);
+    if (!program) return;
+    const newProgram: ProgramData = {
+      ...program,
+      id: genId(),
+      name: `${program.name} (Copy)`,
+      isActive: false,
+      createdAt: Date.now(),
+      workoutDays: program.workoutDays.map((d) => ({ ...d, id: genId() })),
+    };
+    set((s) => ({ programs: [...s.programs, newProgram] }));
+  },
   setActive: (id) =>
     set((s) => ({
       programs: s.programs.map((p) => ({ ...p, isActive: p.id === id })),
     })),
   getActiveProgram: () => get().programs.find((p) => p.isActive),
 
+  loadProgramForEdit: (id) => {
+    const program = get().programs.find((p) => p.id === id);
+    if (!program) return;
+    set({
+      editingProgramId: id,
+      wizard: {
+        step: 0,
+        name: program.name,
+        description: program.description,
+        goal: program.goal,
+        workoutDays: program.workoutDays.map((d) => ({ ...d })),
+      },
+    });
+  },
   setWizardStep: (step) => set((s) => ({ wizard: { ...s.wizard, step } })),
   setWizardName: (name) => set((s) => ({ wizard: { ...s.wizard, name } })),
   setWizardDescription: (desc) => set((s) => ({ wizard: { ...s.wizard, description: desc } })),
@@ -219,23 +256,55 @@ export const useProgramStore = create<ProgramState>((set, get) => ({
         ),
       },
     })),
-  resetWizard: () => set({ wizard: { ...INITIAL_WIZARD } }),
-  finishWizard: () => {
-    const { wizard, programs } = get();
-    if (!wizard.name || !wizard.goal) return;
-    const newProgram: ProgramData = {
-      id: genId(),
-      name: wizard.name,
-      description: wizard.description,
-      goal: wizard.goal,
-      scheduleType: 'rolling',
-      isActive: programs.length === 0,
-      workoutDays: wizard.workoutDays,
-      createdAt: Date.now(),
-    };
+  removeExerciseFromDay: (dayId, exerciseIndex) =>
     set((s) => ({
-      programs: [...s.programs, newProgram],
-      wizard: { ...INITIAL_WIZARD },
-    }));
+      wizard: {
+        ...s.wizard,
+        workoutDays: s.wizard.workoutDays.map((d) =>
+          d.id === dayId
+            ? { ...d, exercises: d.exercises.filter((_, i) => i !== exerciseIndex) }
+            : d,
+        ),
+      },
+    })),
+  resetWizard: () => set({ wizard: { ...INITIAL_WIZARD }, editingProgramId: null }),
+  finishWizard: () => {
+    const { wizard, programs, editingProgramId } = get();
+    const goal = wizard.goal;
+    if (!wizard.name || !goal) return;
+
+    if (editingProgramId) {
+      set((s) => ({
+        programs: s.programs.map((p) =>
+          p.id === editingProgramId
+            ? {
+                ...p,
+                name: wizard.name,
+                description: wizard.description,
+                goal,
+                workoutDays: wizard.workoutDays,
+              }
+            : p,
+        ),
+        wizard: { ...INITIAL_WIZARD },
+        editingProgramId: null,
+      }));
+    } else {
+      const newProgram: ProgramData = {
+        id: genId(),
+        name: wizard.name,
+        description: wizard.description,
+        goal,
+        scheduleType: 'rolling',
+        isActive: programs.length === 0,
+        workoutDays: wizard.workoutDays,
+        createdAt: Date.now(),
+      };
+      set((s) => ({
+        programs: [...s.programs, newProgram],
+        wizard: { ...INITIAL_WIZARD },
+        editingProgramId: null,
+      }));
+    }
   },
 }));
