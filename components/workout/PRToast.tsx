@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withSequence,
   withDelay,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
 
 import { Colors } from '@/constants/Colors';
@@ -27,42 +27,36 @@ interface PRToastProps {
 }
 
 export function PRToast({ visible, exerciseName, prTypes, onDismiss }: PRToastProps) {
-  const translateY = useSharedValue(-120);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.8);
+  const translateY = useSharedValue(-140);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (visible && prTypes.length > 0) {
       haptics.success();
       setTimeout(() => haptics.heavy(), 150);
 
-      translateY.value = withSpring(0, { damping: 14, stiffness: 200 });
-      opacity.value = withTiming(1, { duration: 200 });
-      scale.value = withSpring(1, { damping: 12, stiffness: 250 });
-
-      const hideAfter = 3000;
-      translateY.value = withDelay(
-        hideAfter,
-        withTiming(-120, { duration: 300 }, () => runOnJS(onDismiss)()),
+      translateY.value = withSequence(
+        withSpring(0, { damping: 14, stiffness: 200 }),
+        withDelay(2800, withTiming(-140, { duration: 300 })),
       );
-      opacity.value = withDelay(hideAfter, withTiming(0, { duration: 300 }));
-    } else {
-      translateY.value = -120;
-      opacity.value = 0;
-      scale.value = 0.8;
-    }
-  }, [visible, prTypes, translateY, opacity, scale, onDismiss]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { scale: scale.value }],
-    opacity: opacity.value,
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      dismissTimer.current = setTimeout(onDismiss, 3200);
+    }
+
+    return () => {
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    };
+  }, [visible, prTypes, translateY, onDismiss]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
   }));
 
   if (!visible || prTypes.length === 0) return null;
 
   return (
-    <Animated.View style={[s.container, animatedStyle]}>
-      <View style={s.glow} />
+    <Animated.View style={[s.container, animStyle]}>
       <View style={s.content}>
         <Text style={s.trophy}>🏆</Text>
         <View style={s.textGroup}>
@@ -109,16 +103,11 @@ export function PRBadgeIcon({ type, size = 16 }: { type: PRType; size?: number }
 const s = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 60,
+    top: 12,
     left: 16,
     right: 16,
-    zIndex: 999,
-  },
-  glow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 16,
-    backgroundColor: '#FFD700',
-    opacity: 0.06,
+    zIndex: 9999,
+    elevation: 9999,
   },
   content: {
     flexDirection: 'row',
