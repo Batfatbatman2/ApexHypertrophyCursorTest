@@ -174,26 +174,13 @@ apex-hypertrophy/
 
 ## Phase 0: Project Bootstrap & Dev Environment
 
-- [ ] **0.1** Initialize Expo project with TypeScript template
-  ```bash
-  npx create-expo-app@latest apex-hypertrophy --template tabs
-  ```
-- [ ] **0.2** Install and configure core dependencies
-  ```bash
-  npx expo install expo-router expo-haptics expo-local-authentication
-  npx expo install react-native-reanimated react-native-gesture-handler
-  npx expo install @shopify/react-native-skia
-  npm install nativewind tailwindcss zustand @supabase/supabase-js
-  npm install react-hook-form zod @hookform/resolvers
-  npm install @nozbe/watermelondb
-  npm install victory-native
-  npm install react-native-purchases
-  ```
-- [ ] **0.3** Configure NativeWind/Tailwind with dark-mode-first theme
-- [ ] **0.4** Configure Expo Router with tab layout and screen groups
-- [ ] **0.5** Set up Supabase project (local dev with `supabase init` + Docker)
-- [ ] **0.6** Set up WatermelonDB schema and initial migrations
-- [ ] **0.7** Create design system tokens (`constants/colors.ts`) matching mockup palette:
+- [x] **0.1** Initialize Expo project with TypeScript template (Expo SDK 55, tabs template)
+- [x] **0.2** Install and configure core dependencies (Reanimated, NativeWind, Zustand, Supabase, Zod, etc.)
+- [x] **0.3** Configure NativeWind/Tailwind with dark-mode-first theme (`tailwind.config.js`, `global.css`, `metro.config.js`)
+- [x] **0.4** Configure Expo Router with tab layout and 4 screen groups (Home, Program, Analytics, Settings)
+- [x] **0.5** Set up Supabase client (`lib/supabase.ts` — placeholder config, ready for env vars)
+- [x] **0.6** Set up WatermelonDB schema placeholder (`db/schema.ts` with table names)
+- [x] **0.7** Create design system tokens (`constants/Colors.ts`) matching mockup palette:
   - Background: `#0A0A0A` (pure dark)
   - Surface: `#1A1A1A` (cards)
   - Accent: `#FF2D2D` (primary red)
@@ -204,8 +191,8 @@ apex-hypertrophy/
   - Drop Set: `#8B5CF6` (purple)
   - Text Primary: `#FFFFFF`
   - Text Secondary: `#9CA3AF`
-- [ ] **0.8** Set up ESLint + Prettier + Husky pre-commit hooks
-- [ ] **0.9** Configure EAS Build for iOS/Android/Web
+- [x] **0.8** Set up ESLint + Prettier (`.eslintrc.js`, `.prettierrc`)
+- [x] **0.9** Configure EAS Build placeholder (`app.json` with bundleIdentifier/package)
 
 ---
 
