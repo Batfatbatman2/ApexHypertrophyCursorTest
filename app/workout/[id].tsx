@@ -13,10 +13,12 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { SET_TYPES, type SetType } from '@/constants/set-types';
-import { Button, BottomSheetModal } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { RPEModal } from '@/components/workout/RPEModal';
 import { RestTimer } from '@/components/workout/RestTimer';
 import { PRToast } from '@/components/workout/PRToast';
+import { SetTypeIcon } from '@/components/workout/SetTypeIcon';
+import { SetTypeDropdown } from '@/components/workout/SetTypeDropdown';
 import { haptics } from '@/lib/haptics';
 import { useWorkoutStore, type ActiveSet } from '@/stores/workout-store';
 import { useTimerStore } from '@/stores/timer-store';
@@ -32,7 +34,7 @@ function formatTime(seconds: number): string {
 const SHORT_LABELS: Record<SetType, string> = {
   warmup: 'WARM',
   working: 'WORK',
-  myoRep: 'MYO',
+  myoRep: 'R-P',
   dropSet: 'DROP',
 };
 
@@ -42,7 +44,12 @@ export default function WorkoutScreen() {
   const store = useWorkoutStore();
   const { status, workoutName, exercises, currentExerciseIndex, elapsedSeconds } = store;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [pickerSetId, setPickerSetId] = useState<string | null>(null);
+  const [dropdown, setDropdown] = useState<{
+    setId: string;
+    exIdx: number;
+    anchorY: number;
+    anchorX: number;
+  } | null>(null);
   const [showRpe, setShowRpe] = useState(false);
   const [rpeExerciseIndex, setRpeExerciseIndex] = useState<number | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
@@ -262,8 +269,8 @@ export default function WorkoutScreen() {
           <View style={$.card}>
             {/* Column headers */}
             <View style={$.colHeaders}>
-              <Text style={[$.colH, { width: 44 }]}>Set</Text>
-              <Text style={[$.colH, { flex: 1 }]}>Prev</Text>
+              <Text style={[$.colH, { width: 44 }]}>TYPE</Text>
+              <Text style={[$.colH, { flex: 1 }]}>PREV</Text>
               <Text style={[$.colH, { flex: 1 }]}>LBS</Text>
               <Text style={[$.colH, { flex: 1 }]}>Reps</Text>
               <View style={{ width: 40 }} />
@@ -280,7 +287,14 @@ export default function WorkoutScreen() {
                   exIdx={currentExerciseIndex}
                   isActive={isActive}
                   isFuture={isFuture}
-                  onTypeTap={() => setPickerSetId(set.id)}
+                  onTypeTap={(y: number, x: number) =>
+                    setDropdown({
+                      setId: set.id,
+                      exIdx: currentExerciseIndex,
+                      anchorY: y,
+                      anchorX: x,
+                    })
+                  }
                   onComplete={() => handleCompleteSet(set.id)}
                 />
               );
@@ -361,32 +375,22 @@ export default function WorkoutScreen() {
           </Pressable>
         </View>
 
-        {/* Pickers / Modals */}
-        <BottomSheetModal visible={pickerSetId !== null} onClose={() => setPickerSetId(null)}>
-          <Text style={$.pickerTitle}>Set Type</Text>
-          {(Object.keys(SET_TYPES) as SetType[]).map((type) => {
-            const cfg = SET_TYPES[type];
-            const cur = exercise.sets.find((st) => st.id === pickerSetId);
-            const sel = cur?.setType === type;
-            return (
-              <Pressable
-                key={type}
-                onPress={() => {
-                  haptics.selection();
-                  if (pickerSetId) store.changeSetType(currentExerciseIndex, pickerSetId, type);
-                  setPickerSetId(null);
-                }}
-                style={[$.pickerRow, sel && $.pickerSel]}
-              >
-                <View style={[$.pickerIcon, { backgroundColor: cfg.color + '22' }]}>
-                  <Text style={{ fontSize: 18 }}>{cfg.icon}</Text>
-                </View>
-                <Text style={[$.pickerLabel, sel && { color: cfg.color }]}>{cfg.label}</Text>
-                {sel && <FontAwesome name="check" size={16} color={cfg.color} />}
-              </Pressable>
-            );
-          })}
-        </BottomSheetModal>
+        {/* Set Type Dropdown */}
+        <SetTypeDropdown
+          visible={dropdown !== null}
+          currentType={
+            dropdown
+              ? (exercise.sets.find((st) => st.id === dropdown.setId)?.setType ?? 'working')
+              : 'working'
+          }
+          anchorY={dropdown?.anchorY ?? 0}
+          anchorX={dropdown?.anchorX ?? 0}
+          onSelect={(type) => {
+            if (dropdown) store.changeSetType(dropdown.exIdx, dropdown.setId, type);
+            setDropdown(null);
+          }}
+          onClose={() => setDropdown(null)}
+        />
         <RPEModal
           visible={showRpe}
           exerciseName={
@@ -416,10 +420,11 @@ function SetRow({
   exIdx: number;
   isActive: boolean;
   isFuture: boolean;
-  onTypeTap: () => void;
+  onTypeTap: (anchorY: number, anchorX: number) => void;
   onComplete: () => void;
 }) {
   const store = useWorkoutStore();
+  const typeRef = useRef<View>(null);
   const label = SHORT_LABELS[set.setType];
 
   const glowOpacity = useSharedValue(0);
@@ -454,47 +459,17 @@ function SetRow({
       {isActive && <View style={$.activeAccent} />}
 
       {/* SET icon + label */}
-      <Pressable onPress={onTypeTap} style={$.setCol}>
-        {set.setType === 'warmup' ? (
-          <View style={[$.iconCircle, { backgroundColor: 'rgba(249,115,22,0.1)' }]}>
-            <FontAwesome name="fire" size={13} color="#f97316" />
-          </View>
-        ) : set.setType === 'dropSet' ? (
-          <View style={[$.iconCircle, { backgroundColor: 'rgba(139,92,246,0.1)' }]}>
-            <FontAwesome name="diamond" size={11} color="#a78bfa" />
-          </View>
-        ) : set.setType === 'myoRep' ? (
-          <View style={[$.iconCircle, { backgroundColor: 'rgba(6,182,212,0.1)' }]}>
-            <FontAwesome name="bolt" size={12} color="#06b6d4" />
-          </View>
-        ) : isActive || set.isCompleted ? (
-          <View style={$.numCircleFilled}>
-            <Text style={$.numCircleText}>{set.setNumber}</Text>
-          </View>
-        ) : (
-          <View style={$.numCircleMuted}>
-            <Text style={$.numCircleMutedText}>{set.setNumber}</Text>
-          </View>
-        )}
-        <Text
-          style={[
-            $.setLabel,
-            {
-              color:
-                set.setType === 'warmup'
-                  ? '#f97316'
-                  : set.setType === 'dropSet'
-                    ? '#a78bfa'
-                    : set.setType === 'myoRep'
-                      ? '#06b6d4'
-                      : isActive
-                        ? '#ff2d55'
-                        : '#666',
-            },
-          ]}
-        >
-          {label}
-        </Text>
+      <Pressable
+        ref={typeRef}
+        onPress={() => {
+          typeRef.current?.measureInWindow((x, y, w, h) => {
+            onTypeTap(y + h + 4, x);
+          });
+        }}
+        style={$.setCol}
+      >
+        <SetTypeIcon type={set.setType} size={28} />
+        <Text style={[$.setLabel, { color: SET_TYPES[set.setType].color }]}>{label}</Text>
       </Pressable>
 
       {/* PREV */}
@@ -707,35 +682,6 @@ const $ = StyleSheet.create({
 
   /* SET column */
   setCol: { width: 44, alignItems: 'center', justifyContent: 'center' },
-  iconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numCircleFilled: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#ff2d55',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#ff2d55',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-  },
-  numCircleText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  numCircleMuted: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numCircleMutedText: { color: '#999', fontSize: 11, fontWeight: '600' },
   setLabel: { fontSize: 8, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 },
 
   /* PREV column */
@@ -921,31 +867,4 @@ const $ = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-
-  /* PICKER */
-  pickerTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  pickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 8,
-    backgroundColor: '#2c2c2e',
-    gap: 14,
-  },
-  pickerSel: { backgroundColor: 'rgba(255,255,255,0.06)' },
-  pickerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pickerLabel: { color: '#fff', fontSize: 16, fontWeight: '600', flex: 1 },
 });

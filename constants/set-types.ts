@@ -7,36 +7,36 @@ export interface SetTypeConfig {
   label: string;
   shortLabel: string;
   color: string;
-  icon: string;
+  icon: 'fire' | 'bolt' | 'pause' | 'chevron-down';
 }
 
 export const SET_TYPES: Record<SetType, SetTypeConfig> = {
   warmup: {
     id: 'warmup',
     label: 'Warmup',
-    shortLabel: 'W',
+    shortLabel: 'WARM',
     color: Colors.warmup,
-    icon: '🔥',
+    icon: 'fire',
   },
   working: {
     id: 'working',
     label: 'Working',
-    shortLabel: 'W',
+    shortLabel: 'WORK',
     color: Colors.working,
-    icon: '🎯',
-  },
-  myoRep: {
-    id: 'myoRep',
-    label: 'Myo-Rep',
-    shortLabel: 'MR',
-    color: Colors.myoRep,
-    icon: '⚡',
+    icon: 'bolt',
   },
   dropSet: {
     id: 'dropSet',
     label: 'Drop Set',
-    shortLabel: 'D',
+    shortLabel: 'DROP',
     color: Colors.dropSet,
-    icon: '💧',
+    icon: 'chevron-down',
+  },
+  myoRep: {
+    id: 'myoRep',
+    label: 'Rest-Pause',
+    shortLabel: 'R-P',
+    color: Colors.myoRep,
+    icon: 'pause',
   },
 };
