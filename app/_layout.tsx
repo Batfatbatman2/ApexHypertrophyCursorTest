@@ -11,6 +11,7 @@ import '../global.css';
 import { useAuthStore } from '@/stores/auth-store';
 import { useHistoryStore } from '@/stores/history-store';
 import { usePRStore } from '@/stores/pr-store';
+import { AppErrorBoundary } from '@/components/ui';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -76,28 +77,34 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={ApexDarkTheme}>
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="program/create"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="workout/[id]"
-          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="workout/summary/[id]"
-          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="prs/index"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
-      </Stack>
-      <StatusBar style="light" />
-    </ThemeProvider>
+    <AppErrorBoundary>
+      <ThemeProvider value={ApexDarkTheme}>
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="program/create"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="workout/[id]"
+            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="workout/summary/[id]"
+            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="prs/index"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="coach-report"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+        </Stack>
+        <StatusBar style="light" />
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 }

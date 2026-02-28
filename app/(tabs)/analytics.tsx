@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
+import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Card } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
@@ -177,7 +178,19 @@ export default function AnalyticsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header ──────────────────────────────── */}
-        <Text style={s.title}>Analytics</Text>
+        <View style={s.headerRow}>
+          <Text style={s.title}>Analytics</Text>
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              router.push('/coach-report');
+            }}
+            style={s.reportBtn}
+          >
+            <FontAwesome name="line-chart" size={12} color={Colors.accent} />
+            <Text style={s.reportBtnText}>Report</Text>
+          </Pressable>
+        </View>
 
         {/* ── Range Selector ──────────────────────── */}
         <View style={s.rangeBar}>
@@ -602,14 +615,31 @@ const s = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingBottom: 32 },
   section: { marginBottom: 20 },
 
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 20,
+  },
   title: {
     color: Colors.textPrimary,
     fontSize: 28,
     fontWeight: '800',
-    marginTop: 8,
-    marginBottom: 20,
     letterSpacing: -0.5,
   },
+  reportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: Colors.accent + '14',
+    borderWidth: 1,
+    borderColor: Colors.accent + '30',
+  },
+  reportBtnText: { color: Colors.accent, fontSize: 12, fontWeight: '700' },
 
   rangeBar: {
     flexDirection: 'row',

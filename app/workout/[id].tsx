@@ -12,8 +12,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
+import { Colors } from '@/constants/Colors';
 import { SET_TYPES, type SetType } from '@/constants/set-types';
-import { Button } from '@/components/ui';
+import { Button, BottomSheetModal } from '@/components/ui';
 import { RPEModal } from '@/components/workout/RPEModal';
 import { RestTimer } from '@/components/workout/RestTimer';
 import { PRToast } from '@/components/workout/PRToast';
@@ -24,6 +25,7 @@ import { useWorkoutStore, type ActiveSet } from '@/stores/workout-store';
 import { useTimerStore } from '@/stores/timer-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { usePRStore, type PRType } from '@/stores/pr-store';
+import { EXERCISE_LIBRARY } from '@/constants/exercises';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -50,6 +52,8 @@ export default function WorkoutScreen() {
     anchorY: number;
     anchorX: number;
   } | null>(null);
+  const [showSwap, setShowSwap] = useState(false);
+  const [swapSearch, setSwapSearch] = useState('');
   const [showRpe, setShowRpe] = useState(false);
   const [rpeExerciseIndex, setRpeExerciseIndex] = useState<number | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
@@ -263,6 +267,36 @@ export default function WorkoutScreen() {
                 <Text style={$.badgeText}>{exercise.equipment}</Text>
               </View>
             </View>
+            <View style={$.exActions}>
+              {!exercise.sets.some((st) => st.setType === 'warmup') && (
+                <Pressable
+                  onPress={() => {
+                    haptics.light();
+                    const workingSet = exercise.sets.find(
+                      (st) =>
+                        st.setType === 'working' && (st.weight > 0 || (st.ghostWeight ?? 0) > 0),
+                    );
+                    const w = workingSet?.weight || workingSet?.ghostWeight || 135;
+                    store.addWarmupSets(currentExerciseIndex, w);
+                  }}
+                  style={$.exActionBtn}
+                >
+                  <FontAwesome name="fire" size={11} color="#FACC15" />
+                  <Text style={$.exActionText}>Add Warm-up</Text>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={() => {
+                  haptics.light();
+                  setSwapSearch('');
+                  setShowSwap(true);
+                }}
+                style={$.exActionBtn}
+              >
+                <FontAwesome name="exchange" size={11} color={Colors.textSecondary} />
+                <Text style={$.exActionText}>Swap</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* ═══ SET TABLE (glass card) ═══ */}
@@ -391,6 +425,56 @@ export default function WorkoutScreen() {
           }}
           onClose={() => setDropdown(null)}
         />
+        {/* Quick-Swap Modal */}
+        <BottomSheetModal visible={showSwap} onClose={() => setShowSwap(false)}>
+          <Text style={$.swapTitle}>Quick-Swap Exercise</Text>
+          <Text style={$.swapSub}>Same muscle group alternatives</Text>
+          <TextInput
+            style={$.swapSearch}
+            value={swapSearch}
+            onChangeText={setSwapSearch}
+            placeholder="Search exercises…"
+            placeholderTextColor="#666"
+          />
+          <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
+            {EXERCISE_LIBRARY.filter((ex) => {
+              const mg = exercise.muscleGroups[0]?.toLowerCase();
+              const matchesMuscle = ex.muscleGroups.some((g) => g.toLowerCase() === mg);
+              const matchesSearch =
+                !swapSearch || ex.name.toLowerCase().includes(swapSearch.toLowerCase());
+              return matchesMuscle && matchesSearch && ex.name !== exercise.exerciseName;
+            })
+              .slice(0, 10)
+              .map((ex) => (
+                <Pressable
+                  key={ex.name}
+                  onPress={() => {
+                    haptics.selection();
+                    store.swapExercise(
+                      currentExerciseIndex,
+                      {
+                        exerciseName: ex.name,
+                        muscleGroups: ex.muscleGroups,
+                        equipment: ex.equipment,
+                      },
+                      exercise.sets.filter((st) => st.setType === 'working').length || 3,
+                      exercise.sets[0]?.reps || 8,
+                    );
+                    setShowSwap(false);
+                  }}
+                  style={$.swapRow}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={$.swapRowName}>{ex.name}</Text>
+                    <Text style={$.swapRowMeta}>
+                      {ex.equipment} · {ex.isCompound ? 'compound' : 'isolation'}
+                    </Text>
+                  </View>
+                  <FontAwesome name="chevron-right" size={11} color="#555" />
+                </Pressable>
+              ))}
+          </ScrollView>
+        </BottomSheetModal>
         <RPEModal
           visible={showRpe}
           exerciseName={
@@ -872,4 +956,50 @@ const $ = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
+
+  /* Exercise action buttons */
+  exActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  exActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  exActionText: { color: '#999', fontSize: 11, fontWeight: '600' },
+
+  /* Quick-Swap modal */
+  swapTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  swapSub: { color: '#888', fontSize: 13, textAlign: 'center', marginBottom: 16 },
+  swapSearch: {
+    backgroundColor: '#1c1c1e',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  swapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  swapRowName: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  swapRowMeta: { color: '#777', fontSize: 11, marginTop: 2 },
 });

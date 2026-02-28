@@ -79,6 +79,13 @@ interface WorkoutState {
   removeSet: (exerciseIndex: number, setId: string) => void;
   changeSetType: (exerciseIndex: number, setId: string, newType: SetType) => void;
   addDropSet: (exerciseIndex: number, parentSetId: string) => void;
+  addWarmupSets: (exerciseIndex: number, workingWeight: number) => void;
+  swapExercise: (
+    exerciseIndex: number,
+    newExercise: Omit<ActiveExercise, 'sets'>,
+    numSets: number,
+    reps: number,
+  ) => void;
 
   tick: () => void;
   reset: () => void;
@@ -310,6 +317,44 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       newSets.splice(parentIdx + 1 + dropCount, 0, newSet);
       ex.sets = newSets;
       exercises[exerciseIndex] = ex;
+      return { exercises };
+    }),
+
+  addWarmupSets: (exerciseIndex, workingWeight) =>
+    set((s) => {
+      const exercises = [...s.exercises];
+      const ex = { ...exercises[exerciseIndex] };
+      const ramps = [0.5, 0.65, 0.8];
+      const warmupSets: ActiveSet[] = ramps.map((pct, i) => ({
+        id: genSetId(),
+        setNumber: i + 1,
+        setType: 'warmup' as SetType,
+        weight: Math.round((workingWeight * pct) / 5) * 5,
+        reps: pct <= 0.5 ? 12 : pct <= 0.65 ? 8 : 5,
+        rpe: null,
+        muscleConnection: null,
+        isCompleted: false,
+        parentSetId: null,
+        notes: '',
+        ghostWeight: null,
+        ghostReps: null,
+      }));
+      const existingSets = ex.sets.map((st, i) => ({
+        ...st,
+        setNumber: i + 1 + ramps.length,
+      }));
+      ex.sets = [...warmupSets, ...existingSets];
+      exercises[exerciseIndex] = ex;
+      return { exercises };
+    }),
+
+  swapExercise: (exerciseIndex, newExercise, numSets, reps) =>
+    set((s) => {
+      const exercises = [...s.exercises];
+      exercises[exerciseIndex] = {
+        ...newExercise,
+        sets: buildSetsForExercise(numSets, reps),
+      };
       return { exercises };
     }),
 
