@@ -205,13 +205,19 @@ function BasicInfoStep() {
               haptics.light();
               setWizardName(t.name);
               setWizardGoal(t.goal);
-              const store = useProgramStore.getState();
-              t.workoutDays.forEach((d) => {
-                store.addWizardDay({
-                  ...d,
-                  id: genDayId(),
-                });
-              });
+              // Clear existing days and add new ones in one transaction
+              const newDays = t.workoutDays.map((d) => ({
+                ...d,
+                id: genDayId(),
+              }));
+              useProgramStore.setState((state) => ({
+                wizard: {
+                  ...state.wizard,
+                  name: t.name,
+                  goal: t.goal,
+                  workoutDays: newDays,
+                },
+              }));
             }}
             style={[s.templateCard, i < PROGRAM_TEMPLATES.length - 1 ? { marginRight: 12 } : {}]}
           >
