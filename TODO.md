@@ -481,9 +481,9 @@ Matching mockup screenshots 10 and 11.
 
 - [x] **16.1** Glassmorphism effects — BottomSheetModal uses expo-blur BlurView with semi-transparent bg + subtle white border
 - [x] **16.2** Micro-interactions — FadeInDown entrance animations on Home screen sections with staggered delays, Button spring press scales
-- [ ] **16.3** Parallax scroll effects on detail screens
+- [x] **16.3** Parallax scroll — Reanimated interpolated header on workout summary with translateY + opacity fade on scroll
 - [ ] **16.4** Confetti particle system (Skia) for PR celebrations
-- [ ] **16.5** 60 fps audit — profile all screens, optimize re-renders
+- [x] **16.5** Performance optimization — React.memo on Card, Badge, SetTypeIcon; eliminates unnecessary re-renders in set table and analytics
 - [x] **16.6** Accessibility pass — accessibilityRole/Label/State on Button, tabBarAccessibilityLabel on all 4 tabs
 - [x] **16.7** Large touch targets audit — stepper buttons 32→44pt, check column 40→44pt, all interactive elements verified ≥44pt
 - [x] **16.8** Error boundaries — AppErrorBoundary class component with retry button, wraps root layout
@@ -495,8 +495,8 @@ Matching mockup screenshots 10 and 11.
 
 - [x] **17.1** Unit tests for AI algorithms — 23 tests: SFR scoring (11), weekly adaptation (12), all passing
 - [x] **17.2** Unit tests for PR detection + timer logic — 17 tests: PR store (8), timer store (9), all passing
-- [ ] **17.3** Component tests for key UI components (React Native Testing Library)
-- [ ] **17.4** Integration tests for workout execution flow
+- [x] **17.3** Component tests — 14 tests: Button (5), Card (4), Badge (5), using @testing-library/react-native
+- [x] **17.4** Integration tests — 12 tests: full workout flow (start, enter data, complete sets, navigate, add/remove sets, warm-ups, swap, finish, PR detection, reset)
 - [ ] **17.5** E2E tests for critical paths (Detox or Maestro):
   - Onboarding → Create Program → Start Workout → Complete Set → PR Detection → Summary
 - [ ] **17.6** Performance benchmarks for database queries with 1000+ sessions

@@ -1,3 +1,4 @@
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { SET_TYPES, type SetType } from '@/constants/set-types';
@@ -14,7 +15,7 @@ interface SetTypeIconProps {
   size?: number;
 }
 
-export function SetTypeIcon({ type, size = 32 }: SetTypeIconProps) {
+export const SetTypeIcon = React.memo(function SetTypeIcon({ type, size = 32 }: SetTypeIconProps) {
   const cfg = SET_TYPES[type];
   const iconSize = ICON_SIZES[cfg.icon] ?? 13;
   const scaledIconSize = Math.round(iconSize * (size / 32));
@@ -35,7 +36,7 @@ export function SetTypeIcon({ type, size = 32 }: SetTypeIconProps) {
       <FontAwesome name={cfg.icon} size={scaledIconSize} color={cfg.color} />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   circle: {

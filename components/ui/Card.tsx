@@ -12,9 +12,14 @@ interface CardProps {
   padding?: number;
 }
 
-export function Card({ children, variant = 'default', style, padding = 20 }: CardProps) {
+export const Card = React.memo(function Card({
+  children,
+  variant = 'default',
+  style,
+  padding = 20,
+}: CardProps) {
   return <View style={[styles.base, { padding }, variantStyles[variant], style]}>{children}</View>;
-}
+});
 
 const variantStyles: Record<CardVariant, ViewStyle> = {
   default: {

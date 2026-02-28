@@ -1,8 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedScrollHandler,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 
 import { Colors } from '@/constants/Colors';
 import { Button, Card, Badge } from '@/components/ui';
@@ -31,6 +38,18 @@ export default function WorkoutSummaryScreen() {
   const [showConfetti, setShowConfetti] = useState(true);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
   const [persisted, setPersisted] = useState(false);
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+  });
+  const headerAnimStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(scrollY.value, [0, 120], [0, -30], Extrapolation.CLAMP) },
+    ],
+    opacity: interpolate(scrollY.value, [0, 100], [1, 0.7], Extrapolation.CLAMP),
+  }));
 
   if (completedSummary && !persisted) {
     addToHistory(completedSummary);
@@ -71,17 +90,19 @@ export default function WorkoutSummaryScreen() {
         <ConfettiOverlay visible={showConfetti} onComplete={() => setShowConfetti(false)} />
       )}
 
-      <ScrollView
+      <Animated.ScrollView
         style={s.scroll}
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
-        {/* Header */}
-        <View style={s.header}>
+        {/* Header — parallax */}
+        <Animated.View style={[s.header, headerAnimStyle]}>
           <Text style={s.checkIcon}>✅</Text>
           <Text style={s.headerTitle}>Workout Complete!</Text>
           <Text style={s.headerSubtitle}>{completedSummary.workoutName}</Text>
-        </View>
+        </Animated.View>
 
         {/* Hero Stats */}
         <Card variant="highlighted" style={s.heroCard}>
@@ -160,7 +181,7 @@ export default function WorkoutSummaryScreen() {
         <View style={s.doneSection}>
           <Button title="Done" variant="primary" size="lg" fullWidth onPress={handleDone} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }

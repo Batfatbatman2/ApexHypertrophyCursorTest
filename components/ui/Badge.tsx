@@ -30,7 +30,12 @@ const VARIANT_MAP: Record<string, { bg: string; text: string; border?: string }>
   outlinedMuted: { bg: 'transparent', text: Colors.textSecondary, border: '#333333' },
 };
 
-export function Badge({ label, variant = 'accent', color, size = 'sm' }: BadgeProps) {
+export const Badge = React.memo(function Badge({
+  label,
+  variant = 'accent',
+  color,
+  size = 'sm',
+}: BadgeProps) {
   let bg: string;
   let textColor: string;
   let borderColor: string | undefined;
@@ -71,7 +76,7 @@ export function Badge({ label, variant = 'accent', color, size = 'sm' }: BadgePr
       <Text style={[styles.baseText, sizeStyle.text, { color: textColor }]}>{label}</Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   base: {
