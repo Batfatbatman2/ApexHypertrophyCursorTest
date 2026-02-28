@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
+import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Card } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
 import { useHistoryStore } from '@/stores/history-store';
+import { useReadinessStore } from '@/stores/readiness-store';
 import type { WorkoutSummaryData } from '@/stores/workout-store';
 
 const RANGES = [
@@ -177,7 +179,19 @@ export default function AnalyticsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header ──────────────────────────────── */}
-        <Text style={s.title}>Analytics</Text>
+        <View style={s.headerRow}>
+          <Text style={s.title}>Analytics</Text>
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              router.push('/coach-report');
+            }}
+            style={s.reportBtn}
+          >
+            <FontAwesome name="line-chart" size={12} color={Colors.accent} />
+            <Text style={s.reportBtnText}>Report</Text>
+          </Pressable>
+        </View>
 
         {/* ── Range Selector ──────────────────────── */}
         <View style={s.rangeBar}>
@@ -298,6 +312,12 @@ export default function AnalyticsScreen() {
           </Card>
         </View>
 
+        {/* ── Strength Progression ──────────────────── */}
+        <StrengthProgression workouts={filtered} />
+
+        {/* ── Correlation Scatter Plot ────────────── */}
+        <CorrelationPlot workouts={filtered} />
+
         {/* ── Recent Workouts ────────────────────── */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Recent Workouts</Text>
@@ -313,6 +333,212 @@ export default function AnalyticsScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   Strength Progression Chart
+   ═══════════════════════════════════════════════════ */
+function StrengthProgression({ workouts }: { workouts: WorkoutSummaryData[] }) {
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+
+  const exerciseNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const w of workouts) {
+      for (const ex of w.exercises) {
+        if (ex.completedSets > 0 && ex.topWeight > 0) names.add(ex.exerciseName);
+      }
+    }
+    return [...names].slice(0, 8);
+  }, [workouts]);
+
+  const selected = selectedExercise ?? exerciseNames[0];
+
+  const dataPoints = useMemo(() => {
+    if (!selected) return [];
+    const points: { date: number; weight: number; label: string }[] = [];
+    const sorted = [...workouts].sort((a, b) => a.completedAt - b.completedAt);
+    for (const w of sorted) {
+      const ex = w.exercises.find((e) => e.exerciseName === selected);
+      if (ex && ex.topWeight > 0) {
+        points.push({
+          date: w.completedAt,
+          weight: ex.topWeight,
+          label: new Date(w.completedAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+        });
+      }
+    }
+    return points;
+  }, [workouts, selected]);
+
+  if (exerciseNames.length === 0) return null;
+
+  const maxW = Math.max(...dataPoints.map((p) => p.weight), 1);
+  const minW = Math.min(...dataPoints.map((p) => p.weight), maxW);
+  const range = maxW - minW || 1;
+  const W = 280;
+  const H = 120;
+  const padding = 8;
+
+  const pathD =
+    dataPoints.length > 1
+      ? dataPoints
+          .map((p, i) => {
+            const x = padding + (i / (dataPoints.length - 1)) * (W - padding * 2);
+            const y = H - padding - ((p.weight - minW) / range) * (H - padding * 2);
+            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+          })
+          .join(' ')
+      : '';
+
+  return (
+    <Card style={s.section}>
+      <Text style={s.cardTitle}>Strength Progression</Text>
+      <Text style={s.cardMeta}>Top weight per session</Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginTop: 12, marginBottom: 12 }}
+      >
+        {exerciseNames.map((name) => {
+          const active = name === selected;
+          return (
+            <Pressable
+              key={name}
+              onPress={() => {
+                haptics.selection();
+                setSelectedExercise(name);
+              }}
+              style={[s.exChip, active && s.exChipActive]}
+            >
+              <Text style={[s.exChipText, active && s.exChipTextActive]} numberOfLines={1}>
+                {name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {dataPoints.length > 1 ? (
+        <View style={{ alignItems: 'center' }}>
+          <Svg width={W} height={H}>
+            {pathD ? (
+              <Path d={pathD} fill="none" stroke={Colors.accent + '40'} strokeWidth={2} />
+            ) : null}
+            <Circle
+              cx={padding}
+              cy={H - padding - ((dataPoints[0].weight - minW) / range) * (H - padding * 2)}
+              r={3}
+              fill={Colors.accent + '60'}
+            />
+            {dataPoints.map((p, i) => {
+              if (i === 0) return null;
+              const x = padding + (i / (dataPoints.length - 1)) * (W - padding * 2);
+              const y = H - padding - ((p.weight - minW) / range) * (H - padding * 2);
+              return (
+                <Circle
+                  key={i}
+                  cx={x}
+                  cy={y}
+                  r={3}
+                  fill={i === dataPoints.length - 1 ? Colors.accent : Colors.accent + '60'}
+                />
+              );
+            })}
+          </Svg>
+          <View style={s.chartLabelsRow}>
+            <Text style={s.chartMinMax}>{minW} lbs</Text>
+            <Text style={s.chartMinMax}>{maxW} lbs</Text>
+          </View>
+        </View>
+      ) : (
+        <View style={s.chartEmpty}>
+          <Text style={s.chartEmptyText}>
+            {dataPoints.length === 1
+              ? 'Need 2+ sessions to show trend'
+              : 'No data for this exercise'}
+          </Text>
+        </View>
+      )}
+    </Card>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   Correlation Scatter Plot
+   ═══════════════════════════════════════════════════ */
+function CorrelationPlot({ workouts }: { workouts: WorkoutSummaryData[] }) {
+  const readinessEntries = useReadinessStore((s) => s.entries);
+  const getScore = useReadinessStore((s) => s.getScore);
+
+  const points = useMemo(() => {
+    const pts: { readiness: number; volume: number; label: string }[] = [];
+    for (const w of workouts) {
+      const dayStart = new Date(w.completedAt);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(w.completedAt);
+      dayEnd.setHours(23, 59, 59, 999);
+      const entry = readinessEntries.find(
+        (e) => e.surveyedAt >= dayStart.getTime() && e.surveyedAt <= dayEnd.getTime(),
+      );
+      if (entry) {
+        pts.push({
+          readiness: getScore(entry),
+          volume: w.totalVolume,
+          label: new Date(w.completedAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+        });
+      }
+    }
+    return pts;
+  }, [workouts, readinessEntries, getScore]);
+
+  if (points.length < 2) return null;
+
+  const W = 280;
+  const H = 140;
+  const pad = 16;
+  const maxR = Math.max(...points.map((p) => p.readiness), 100);
+  const minR = Math.min(...points.map((p) => p.readiness), 0);
+  const maxV = Math.max(...points.map((p) => p.volume), 1);
+  const minV = Math.min(...points.map((p) => p.volume), 0);
+  const rangeR = maxR - minR || 1;
+  const rangeV = maxV - minV || 1;
+
+  return (
+    <Card style={s.section}>
+      <Text style={s.cardTitle}>Readiness vs Volume</Text>
+      <Text style={s.cardMeta}>Does readiness predict performance?</Text>
+      <View style={{ alignItems: 'center', marginTop: 12 }}>
+        <Svg width={W} height={H}>
+          {points.map((p, i) => {
+            const x = pad + ((p.readiness - minR) / rangeR) * (W - pad * 2);
+            const y = H - pad - ((p.volume - minV) / rangeV) * (H - pad * 2);
+            return (
+              <Circle
+                key={i}
+                cx={x}
+                cy={y}
+                r={5}
+                fill={Colors.accent + '80'}
+                stroke={Colors.accent}
+                strokeWidth={1}
+              />
+            );
+          })}
+        </Svg>
+        <View style={s.scatterLabels}>
+          <Text style={s.scatterLabelText}>Low Readiness →</Text>
+          <Text style={s.scatterLabelText}>High Readiness</Text>
+        </View>
+      </View>
+    </Card>
   );
 }
 
@@ -467,14 +693,31 @@ const s = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingBottom: 32 },
   section: { marginBottom: 20 },
 
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 20,
+  },
   title: {
     color: Colors.textPrimary,
     fontSize: 28,
     fontWeight: '800',
-    marginTop: 8,
-    marginBottom: 20,
     letterSpacing: -0.5,
   },
+  reportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: Colors.accent + '14',
+    borderWidth: 1,
+    borderColor: Colors.accent + '30',
+  },
+  reportBtnText: { color: Colors.accent, fontSize: 12, fontWeight: '700' },
 
   rangeBar: {
     flexDirection: 'row',
@@ -709,4 +952,37 @@ const s = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 24,
   },
+
+  exChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceLight,
+    marginRight: 8,
+  },
+  exChipActive: {
+    backgroundColor: Colors.accent + '22',
+    borderWidth: 1,
+    borderColor: Colors.accent,
+  },
+  exChipText: { color: Colors.textSecondary, fontSize: 11, fontWeight: '600', maxWidth: 120 },
+  exChipTextActive: { color: Colors.accent },
+  chartLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 8,
+    marginTop: 4,
+  },
+  chartMinMax: { color: Colors.textTertiary, fontSize: 10, fontWeight: '600' },
+  chartEmpty: { alignItems: 'center', paddingVertical: 24 },
+  chartEmptyText: { color: Colors.textTertiary, fontSize: 13 },
+  scatterLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  scatterLabelText: { color: Colors.textTertiary, fontSize: 10, fontWeight: '600' },
 });

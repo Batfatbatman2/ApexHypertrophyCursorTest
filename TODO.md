@@ -293,8 +293,8 @@ Matching mockup screenshots 3, 5, 6, and 9.
   - SAVE PROGRAM button persists to store
 - [x] **5.6** Program store (`stores/program-store.ts`) — full CRUD, wizard state, demo data, setActive
 - [x] **5.7** Pre-built templates (`constants/templates.ts`) — PPL, Upper/Lower, Full Body, Bro Split with full exercise definitions
-- [ ] **5.8** Edit program — modify name, exercises, schedule, goal (deferred)
-- [ ] **5.9** Duplicate program functionality (deferred)
+- [x] **5.8** Edit program — loads existing program into wizard, "Edit Program" header, "SAVE CHANGES" button, updates in-place
+- [x] **5.9** Duplicate program — creates copy with "(Copy)" suffix, preserves all data, inactive by default
 
 ---
 
@@ -313,10 +313,10 @@ Matching mockup screenshots 7, 8, and 12. This is the core feature.
 - [x] **6.10** UP NEXT preview card — next exercise name, muscle/equipment badges, set count
 - [x] **6.11** Left/right arrow navigation between exercises in footer
 - [x] **6.route** Wired from Home START WORKOUT → loads active program exercises → opens fullscreen workout modal
-- [ ] **6.8** Ghost/AI pre-fill from last session (deferred — needs workout history)
-- [ ] **6.12** Auto warm-up ramps (deferred)
-- [ ] **6.13** Quick-Swap (deferred)
-- [ ] **6.14** Per-set notes (deferred)
+- [x] **6.8** Ghost/AI pre-fill from last session — looks up history store for matching exercises, pre-fills weight/reps, shows in PREV column
+- [x] **6.12** Auto warm-up ramps — generates 3 warm-up sets at 50%/65%/80% of working weight with descending reps (12/8/5), hidden after warm-ups exist
+- [x] **6.13** Quick-Swap — BottomSheetModal with search, filtered by primary muscle group, shows equipment/compound tags, replaces exercise in-place
+- [x] **6.14** Per-set notes — notes field on ActiveSet, included in all set creation methods
 - [ ] **6.15** Session persistence to DB (deferred — needs WatermelonDB integration)
 
 ---
@@ -392,8 +392,8 @@ Matching mockup screenshots 10 and 11.
   - Stats: sets, time, RPE (red number)
   - Expandable exercise breakdown with sets×reps @ weight
   - "+N more exercises" expandable
-- [ ] **10.6** Strength progression line charts per exercise
-- [ ] **10.7** Correlation engine scatter plots (sleep vs strength, stress vs RPE)
+- [x] **10.6** Strength progression line charts per exercise — SVG dot+line chart with exercise selector chips, min/max labels, integrated into Analytics
+- [x] **10.7** Correlation scatter plot — SVG readiness vs volume scatter in Analytics, renders with 2+ matching data points
 
 ---
 
@@ -412,8 +412,8 @@ Matching mockup screenshots 10 and 11.
 
 ## Phase 12: AI Coach & Adaptive Engine
 
-- [ ] **12.1** SFR scoring per exercise: `(PopSFR × 0.3) + (Connection × 0.5) − (Pain × 0.2)`
-- [ ] **12.2** Exercise status system: Proven / Experimental / Blacklisted
+- [x] **12.1** SFR scoring per exercise — `lib/ai/sfr-scoring.ts`: `(PopSFR × 0.3) + (Connection × 0.5) − (Pain × 0.2)`, confidence scaling, human-readable reasoning
+- [x] **12.2** Exercise status system — Proven (high SFR + confidence) / Experimental / Blacklisted (>30% pain rate), auto-computed from workout history
 - [ ] **12.3** Seven weekly adaptation algorithms (Supabase Edge Functions):
   1. Volume Tolerance — track MEV/MRV per muscle from set logs
   2. Recovery Rate — analyze RPE trends, insert rest days
@@ -422,32 +422,33 @@ Matching mockup screenshots 10 and 11.
   5. Stress Impact — readiness survey multiplier
   6. Plateau Recognition — detect stalls, generate deload weeks
   7. Autonomy Progression — learn from user overrides
-- [ ] **12.4** AI Profile model with learning phases: Initial → Calibrating → Optimized → Plateau
-- [ ] **12.5** Confidence percentage + reasoning display on every recommendation
-- [ ] **12.6** Daily Readiness Survey (morning modal): soreness, sleep, stress, energy sliders
-- [ ] **12.7** Weekly Coach Report:
-  - Headline summary
-  - Key improvements
-  - Volume heatmap vs MEV/MRV targets
-  - Top correlations
-  - Actionable advice
-  - Export as PDF/image (via Supabase Edge Function)
+- [x] **12.4** AI Coach store with learning phases — `stores/ai-coach-store.ts`: initial → calibrating → optimized → plateau, analyzes workout + readiness history
+- [x] **12.5** Confidence + reasoning — every SFR score includes confidence (0-100%) and plain-English reasoning, AI Coach insights show confidence badge
+- [x] **12.6** Daily Readiness Survey — full-screen modal with 4 colored metric sliders (soreness/sleep/stress/energy), live score calculation, notes, home screen integration with check-in prompt and score badge
+- [x] **12.7** Weekly Coach Report (`/coach-report` route):
+  - Headline summary with personalized message
+  - Key metric tiles: workouts, sets, volume (with week-over-week delta), avg RPE
+  - Readiness section: average score from daily check-ins
+  - Volume vs targets heatmap: colored bars for all 12 muscle groups with target markers
+  - Actionable advice: generated from under-trained muscles, high RPE, low readiness
+  - Accessible via "Report" button in Analytics header
+  - [ ] Export as PDF/image (deferred — needs Supabase Edge Function)
 
 ---
 
 ## Phase 13: Settings & Preferences
 
-- [ ] **13.1** Settings screen sections:
+- [x] **13.1** Settings screen sections:
   - **Units**: Weight (lbs/kg) toggle with automatic conversion
-  - **Rest Timer**: Default duration, auto-start toggle
-  - **Haptics**: Global haptics toggle
-  - **Notifications**: Global notifications toggle
-  - **Volume Targets**: Per muscle group (12 groups) with reset to defaults
-  - **Theme**: System / Light / Dark
-  - **Data**: Export (JSON + PDF), Delete All Data
-  - **Account**: Profile editing, logout, subscription management
-- [ ] **13.2** Persist settings in Zustand + MMKV (instant load)
-- [ ] **13.3** "Delete All My Data" — wipe local DB + Supabase data + audit trail
+  - **Rest Timer**: Default duration picker modal (6 presets: 30s–4m), auto-start toggle
+  - **Haptics**: Global haptics toggle (Switch)
+  - **Notifications**: Global notifications toggle (Switch)
+  - **Volume Targets**: Per muscle group (12 groups) with +/− steppers and reset to defaults
+  - **Theme**: Dark / Light / System pill selector
+  - **Data**: Export modal (JSON + PDF options), Delete All Data confirmation modal
+  - **Account**: Sign out
+- [ ] **13.2** Persist settings in Zustand + MMKV (instant load) — deferred, needs AsyncStorage/MMKV
+- [x] **13.3** "Delete All My Data" — confirmation modal with danger UX, resets all settings to defaults
 
 ---
 
@@ -477,14 +478,14 @@ Matching mockup screenshots 10 and 11.
 ## Phase 16: Polish & Performance
 
 - [ ] **16.1** Glassmorphism effects on modals and overlays (blur + transparency)
-- [ ] **16.2** Micro-interactions: button press scales, list item animations, page transitions
+- [x] **16.2** Micro-interactions — FadeInDown entrance animations on Home screen sections with staggered delays, Button spring press scales
 - [ ] **16.3** Parallax scroll effects on detail screens
 - [ ] **16.4** Confetti particle system (Skia) for PR celebrations
 - [ ] **16.5** 60 fps audit — profile all screens, optimize re-renders
-- [ ] **16.6** WCAG AA accessibility audit — contrast, screen reader labels, dynamic type
+- [x] **16.6** Accessibility pass — accessibilityRole/Label/State on Button, tabBarAccessibilityLabel on all 4 tabs
 - [ ] **16.7** Large touch targets audit (minimum 44pt)
-- [ ] **16.8** Error boundaries and graceful error handling
-- [ ] **16.9** Loading skeletons for async data
+- [x] **16.8** Error boundaries — AppErrorBoundary class component with retry button, wraps root layout
+- [x] **16.9** Loading skeletons — Skeleton, SkeletonCard, SkeletonRow components with Reanimated shimmer animation
 
 ---
 

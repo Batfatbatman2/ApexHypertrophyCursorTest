@@ -37,6 +37,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          tabBarAccessibilityLabel: 'Home tab',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="home" color={color} focused={focused} />
           ),
@@ -46,6 +47,7 @@ export default function TabLayout() {
         name="program"
         options={{
           title: 'Program',
+          tabBarAccessibilityLabel: 'Program tab',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="calendar" color={color} focused={focused} />
           ),
@@ -55,6 +57,7 @@ export default function TabLayout() {
         name="analytics"
         options={{
           title: 'Analytics',
+          tabBarAccessibilityLabel: 'Analytics tab',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="bar-chart" color={color} focused={focused} />
           ),
@@ -64,6 +67,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          tabBarAccessibilityLabel: 'Settings tab',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name="cog" color={color} focused={focused} />
           ),

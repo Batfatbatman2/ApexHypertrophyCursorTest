@@ -22,11 +22,11 @@ export const Colors = {
   warning: '#FACC15',
   error: '#EF4444',
 
-  // Set type colors (from mockup screenshots 7, 8, 12)
-  warmup: '#F97316',
-  working: '#FF2D2D',
-  myoRep: '#06B6D4',
-  dropSet: '#8B5CF6',
+  // Set type colors (refined from design reference)
+  warmup: '#FACC15',
+  working: '#FF2D55',
+  myoRep: '#3B82F6',
+  dropSet: '#A78BFA',
 
   // Text
   textPrimary: '#FFFFFF',
