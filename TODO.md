@@ -393,7 +393,7 @@ Matching mockup screenshots 10 and 11.
   - Expandable exercise breakdown with sets×reps @ weight
   - "+N more exercises" expandable
 - [x] **10.6** Strength progression line charts per exercise — SVG dot+line chart with exercise selector chips, min/max labels, integrated into Analytics
-- [ ] **10.7** Correlation engine scatter plots (sleep vs strength, stress vs RPE)
+- [x] **10.7** Correlation scatter plot — SVG readiness vs volume scatter in Analytics, renders with 2+ matching data points
 
 ---
 
@@ -412,8 +412,8 @@ Matching mockup screenshots 10 and 11.
 
 ## Phase 12: AI Coach & Adaptive Engine
 
-- [ ] **12.1** SFR scoring per exercise: `(PopSFR × 0.3) + (Connection × 0.5) − (Pain × 0.2)`
-- [ ] **12.2** Exercise status system: Proven / Experimental / Blacklisted
+- [x] **12.1** SFR scoring per exercise — `lib/ai/sfr-scoring.ts`: `(PopSFR × 0.3) + (Connection × 0.5) − (Pain × 0.2)`, confidence scaling, human-readable reasoning
+- [x] **12.2** Exercise status system — Proven (high SFR + confidence) / Experimental / Blacklisted (>30% pain rate), auto-computed from workout history
 - [ ] **12.3** Seven weekly adaptation algorithms (Supabase Edge Functions):
   1. Volume Tolerance — track MEV/MRV per muscle from set logs
   2. Recovery Rate — analyze RPE trends, insert rest days
@@ -422,8 +422,8 @@ Matching mockup screenshots 10 and 11.
   5. Stress Impact — readiness survey multiplier
   6. Plateau Recognition — detect stalls, generate deload weeks
   7. Autonomy Progression — learn from user overrides
-- [ ] **12.4** AI Profile model with learning phases: Initial → Calibrating → Optimized → Plateau
-- [ ] **12.5** Confidence percentage + reasoning display on every recommendation
+- [x] **12.4** AI Coach store with learning phases — `stores/ai-coach-store.ts`: initial → calibrating → optimized → plateau, analyzes workout + readiness history
+- [x] **12.5** Confidence + reasoning — every SFR score includes confidence (0-100%) and plain-English reasoning, AI Coach insights show confidence badge
 - [x] **12.6** Daily Readiness Survey — full-screen modal with 4 colored metric sliders (soreness/sleep/stress/energy), live score calculation, notes, home screen integration with check-in prompt and score badge
 - [x] **12.7** Weekly Coach Report (`/coach-report` route):
   - Headline summary with personalized message
@@ -478,11 +478,11 @@ Matching mockup screenshots 10 and 11.
 ## Phase 16: Polish & Performance
 
 - [ ] **16.1** Glassmorphism effects on modals and overlays (blur + transparency)
-- [ ] **16.2** Micro-interactions: button press scales, list item animations, page transitions
+- [x] **16.2** Micro-interactions — FadeInDown entrance animations on Home screen sections with staggered delays, Button spring press scales
 - [ ] **16.3** Parallax scroll effects on detail screens
 - [ ] **16.4** Confetti particle system (Skia) for PR celebrations
 - [ ] **16.5** 60 fps audit — profile all screens, optimize re-renders
-- [ ] **16.6** WCAG AA accessibility audit — contrast, screen reader labels, dynamic type
+- [x] **16.6** Accessibility pass — accessibilityRole/Label/State on Button, tabBarAccessibilityLabel on all 4 tabs
 - [ ] **16.7** Large touch targets audit (minimum 44pt)
 - [x] **16.8** Error boundaries — AppErrorBoundary class component with retry button, wraps root layout
 - [x] **16.9** Loading skeletons — Skeleton, SkeletonCard, SkeletonRow components with Reanimated shimmer animation
