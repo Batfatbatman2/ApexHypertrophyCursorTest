@@ -314,8 +314,8 @@ Matching mockup screenshots 7, 8, and 12. This is the core feature.
 - [x] **6.11** Left/right arrow navigation between exercises in footer
 - [x] **6.route** Wired from Home START WORKOUT → loads active program exercises → opens fullscreen workout modal
 - [x] **6.8** Ghost/AI pre-fill from last session — looks up history store for matching exercises, pre-fills weight/reps, shows in PREV column
-- [ ] **6.12** Auto warm-up ramps (deferred)
-- [ ] **6.13** Quick-Swap (deferred)
+- [x] **6.12** Auto warm-up ramps — generates 3 warm-up sets at 50%/65%/80% of working weight with descending reps (12/8/5), hidden after warm-ups exist
+- [x] **6.13** Quick-Swap — BottomSheetModal with search, filtered by primary muscle group, shows equipment/compound tags, replaces exercise in-place
 - [x] **6.14** Per-set notes — notes field on ActiveSet, included in all set creation methods
 - [ ] **6.15** Session persistence to DB (deferred — needs WatermelonDB integration)
 
@@ -425,13 +425,14 @@ Matching mockup screenshots 10 and 11.
 - [ ] **12.4** AI Profile model with learning phases: Initial → Calibrating → Optimized → Plateau
 - [ ] **12.5** Confidence percentage + reasoning display on every recommendation
 - [x] **12.6** Daily Readiness Survey — full-screen modal with 4 colored metric sliders (soreness/sleep/stress/energy), live score calculation, notes, home screen integration with check-in prompt and score badge
-- [ ] **12.7** Weekly Coach Report:
-  - Headline summary
-  - Key improvements
-  - Volume heatmap vs MEV/MRV targets
-  - Top correlations
-  - Actionable advice
-  - Export as PDF/image (via Supabase Edge Function)
+- [x] **12.7** Weekly Coach Report (`/coach-report` route):
+  - Headline summary with personalized message
+  - Key metric tiles: workouts, sets, volume (with week-over-week delta), avg RPE
+  - Readiness section: average score from daily check-ins
+  - Volume vs targets heatmap: colored bars for all 12 muscle groups with target markers
+  - Actionable advice: generated from under-trained muscles, high RPE, low readiness
+  - Accessible via "Report" button in Analytics header
+  - [ ] Export as PDF/image (deferred — needs Supabase Edge Function)
 
 ---
 
@@ -483,8 +484,8 @@ Matching mockup screenshots 10 and 11.
 - [ ] **16.5** 60 fps audit — profile all screens, optimize re-renders
 - [ ] **16.6** WCAG AA accessibility audit — contrast, screen reader labels, dynamic type
 - [ ] **16.7** Large touch targets audit (minimum 44pt)
-- [ ] **16.8** Error boundaries and graceful error handling
-- [ ] **16.9** Loading skeletons for async data
+- [x] **16.8** Error boundaries — AppErrorBoundary class component with retry button, wraps root layout
+- [x] **16.9** Loading skeletons — Skeleton, SkeletonCard, SkeletonRow components with Reanimated shimmer animation
 
 ---
 
