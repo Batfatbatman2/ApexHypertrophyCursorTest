@@ -540,9 +540,9 @@ const s = StyleSheet.create({
   volumeName: { color: Colors.textPrimary, fontSize: 14, fontWeight: '500' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   stepperBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',

@@ -808,7 +808,7 @@ const $ = StyleSheet.create({
   },
 
   /* CHECK column */
-  checkCol: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  checkCol: { width: 44, alignItems: 'center', justifyContent: 'center' },
   checkDone: {
     width: 30,
     height: 30,
