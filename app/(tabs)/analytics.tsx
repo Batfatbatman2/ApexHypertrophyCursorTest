@@ -9,6 +9,7 @@ import { Colors } from '@/constants/Colors';
 import { Card } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
 import { useHistoryStore } from '@/stores/history-store';
+import { useReadinessStore } from '@/stores/readiness-store';
 import type { WorkoutSummaryData } from '@/stores/workout-store';
 
 const RANGES = [
@@ -314,6 +315,9 @@ export default function AnalyticsScreen() {
         {/* ── Strength Progression ──────────────────── */}
         <StrengthProgression workouts={filtered} />
 
+        {/* ── Correlation Scatter Plot ────────────── */}
+        <CorrelationPlot workouts={filtered} />
+
         {/* ── Recent Workouts ────────────────────── */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Recent Workouts</Text>
@@ -460,6 +464,80 @@ function StrengthProgression({ workouts }: { workouts: WorkoutSummaryData[] }) {
           </Text>
         </View>
       )}
+    </Card>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   Correlation Scatter Plot
+   ═══════════════════════════════════════════════════ */
+function CorrelationPlot({ workouts }: { workouts: WorkoutSummaryData[] }) {
+  const readinessEntries = useReadinessStore((s) => s.entries);
+  const getScore = useReadinessStore((s) => s.getScore);
+
+  const points = useMemo(() => {
+    const pts: { readiness: number; volume: number; label: string }[] = [];
+    for (const w of workouts) {
+      const dayStart = new Date(w.completedAt);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(w.completedAt);
+      dayEnd.setHours(23, 59, 59, 999);
+      const entry = readinessEntries.find(
+        (e) => e.surveyedAt >= dayStart.getTime() && e.surveyedAt <= dayEnd.getTime(),
+      );
+      if (entry) {
+        pts.push({
+          readiness: getScore(entry),
+          volume: w.totalVolume,
+          label: new Date(w.completedAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+        });
+      }
+    }
+    return pts;
+  }, [workouts, readinessEntries, getScore]);
+
+  if (points.length < 2) return null;
+
+  const W = 280;
+  const H = 140;
+  const pad = 16;
+  const maxR = Math.max(...points.map((p) => p.readiness), 100);
+  const minR = Math.min(...points.map((p) => p.readiness), 0);
+  const maxV = Math.max(...points.map((p) => p.volume), 1);
+  const minV = Math.min(...points.map((p) => p.volume), 0);
+  const rangeR = maxR - minR || 1;
+  const rangeV = maxV - minV || 1;
+
+  return (
+    <Card style={s.section}>
+      <Text style={s.cardTitle}>Readiness vs Volume</Text>
+      <Text style={s.cardMeta}>Does readiness predict performance?</Text>
+      <View style={{ alignItems: 'center', marginTop: 12 }}>
+        <Svg width={W} height={H}>
+          {points.map((p, i) => {
+            const x = pad + ((p.readiness - minR) / rangeR) * (W - pad * 2);
+            const y = H - pad - ((p.volume - minV) / rangeV) * (H - pad * 2);
+            return (
+              <Circle
+                key={i}
+                cx={x}
+                cy={y}
+                r={5}
+                fill={Colors.accent + '80'}
+                stroke={Colors.accent}
+                strokeWidth={1}
+              />
+            );
+          })}
+        </Svg>
+        <View style={s.scatterLabels}>
+          <Text style={s.scatterLabelText}>Low Readiness →</Text>
+          <Text style={s.scatterLabelText}>High Readiness</Text>
+        </View>
+      </View>
     </Card>
   );
 }
@@ -899,4 +977,12 @@ const s = StyleSheet.create({
   chartMinMax: { color: Colors.textTertiary, fontSize: 10, fontWeight: '600' },
   chartEmpty: { alignItems: 'center', paddingVertical: 24 },
   chartEmptyText: { color: Colors.textTertiary, fontSize: 13 },
+  scatterLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+    marginTop: 4,
+  },
+  scatterLabelText: { color: Colors.textTertiary, fontSize: 10, fontWeight: '600' },
 });

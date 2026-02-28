@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ScrollView, Text, View, RefreshControl, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { router } from 'expo-router';
@@ -13,6 +14,7 @@ import { useWorkoutStore, buildSetsForExercise } from '@/stores/workout-store';
 import { useHistoryStore } from '@/stores/history-store';
 import { usePRStore } from '@/stores/pr-store';
 import { useReadinessStore } from '@/stores/readiness-store';
+import { useAICoachStore } from '@/stores/ai-coach-store';
 import {
   HeroWorkoutCard,
   WeeklyVolumeRings,
@@ -120,6 +122,10 @@ export default function HomeScreen() {
   const totalPRs = usePRStore((s) => s.totalPRCount);
   const todayEntry = useReadinessStore((s) => s.getTodayEntry());
   const getScore = useReadinessStore((s) => s.getScore);
+  const readinessEntries = useReadinessStore((s) => s.entries);
+  const coachInsights = useAICoachStore((s) => s.insights);
+  const analyzeHistory = useAICoachStore((s) => s.analyzeWorkoutHistory);
+  const learningInfo = useAICoachStore((s) => s.getLearningPhase());
 
   const liveStats: StatItem[] = [
     { value: String(workoutCount), label: 'Workouts' },
@@ -168,8 +174,9 @@ export default function HomeScreen() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     haptics.light();
+    analyzeHistory(history, readinessEntries);
     setTimeout(() => setRefreshing(false), 800);
-  }, []);
+  }, [analyzeHistory, history, readinessEntries]);
 
   return (
     <SafeAreaView style={s.safe}>
@@ -260,23 +267,54 @@ export default function HomeScreen() {
         )}
 
         {/* ── Hero ───────────────────────────────────── */}
-        <HeroWorkoutCard
-          workout={MOCK_WORKOUT}
-          isRestDay={isRestDay}
-          onStartWorkout={handleStartWorkout}
-        />
+        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          <HeroWorkoutCard
+            workout={MOCK_WORKOUT}
+            isRestDay={isRestDay}
+            onStartWorkout={handleStartWorkout}
+          />
+        </Animated.View>
 
         {/* ── Weekly Volume ──────────────────────────── */}
-        <WeeklyVolumeRings data={MOCK_VOLUME} />
+        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          <WeeklyVolumeRings data={MOCK_VOLUME} />
+        </Animated.View>
 
         {/* ── Coming Up ──────────────────────────────── */}
-        <ComingUpScroll items={isRestDay ? MOCK_COMING_UP : MOCK_COMING_UP} />
+        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+          <ComingUpScroll items={isRestDay ? MOCK_COMING_UP : MOCK_COMING_UP} />
+        </Animated.View>
 
         {/* ── Recent Workouts ────────────────────────── */}
         <RecentWorkouts workouts={MOCK_RECENT} />
 
         {/* ── Stats ──────────────────────────────────── */}
         <StatsRow stats={liveStats} />
+
+        {/* ── AI Coach Insight ─────────────────────── */}
+        {coachInsights.length > 0 && (
+          <Card padding={14} style={s.coachCard}>
+            <View style={s.coachHeader}>
+              <View style={s.coachIcon}>
+                <FontAwesome name="lightbulb-o" size={14} color="#FACC15" />
+              </View>
+              <Text style={s.coachLabel}>AI Coach</Text>
+              <View style={s.coachBadge}>
+                <Text style={s.coachBadgeText}>
+                  {Math.round(coachInsights[0].confidence * 100)}%
+                </Text>
+              </View>
+            </View>
+            <Text style={s.coachTitle}>{coachInsights[0].title}</Text>
+            <Text style={s.coachBody}>{coachInsights[0].body}</Text>
+            <View style={s.coachPhase}>
+              <View style={s.coachPhaseBar}>
+                <View style={[s.coachPhaseFill, { width: `${learningInfo.progress}%` }]} />
+              </View>
+              <Text style={s.coachPhaseText}>{learningInfo.label}</Text>
+            </View>
+          </Card>
+        )}
       </ScrollView>
 
       <ReadinessSurvey visible={showSurvey} onClose={() => setShowSurvey(false)} />
@@ -329,4 +367,34 @@ const s = StyleSheet.create({
   },
   checkinBtnText: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600', flex: 1 },
   checkinBtnSub: { color: Colors.textTertiary, fontSize: 12 },
+
+  coachCard: { marginTop: 16 },
+  coachHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  coachIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(250,204,21,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coachLabel: { color: '#FACC15', fontSize: 12, fontWeight: '700', flex: 1 },
+  coachBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  coachBadgeText: { color: Colors.textTertiary, fontSize: 10, fontWeight: '700' },
+  coachTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  coachBody: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18, marginBottom: 12 },
+  coachPhase: { gap: 6 },
+  coachPhaseBar: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    overflow: 'hidden',
+  },
+  coachPhaseFill: { height: '100%', backgroundColor: '#FACC15', borderRadius: 2 },
+  coachPhaseText: { color: Colors.textTertiary, fontSize: 10, fontWeight: '600' },
 });
