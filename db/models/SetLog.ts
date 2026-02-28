@@ -9,18 +9,18 @@ export default class SetLog extends Model {
     exercises: { type: 'belongs_to' as const, key: 'exercise_id' },
   };
 
-  @field('workout_session_id') workoutSessionId!: string;
-  @field('exercise_id') exerciseId!: string;
-  @field('set_number') setNumber!: number;
-  @field('set_type') setType!: string;
-  @field('weight') weight!: number;
-  @field('reps') reps!: number;
-  @field('rpe') rpe!: number | null;
-  @field('muscle_connection') muscleConnection!: number | null;
-  @field('is_completed') isCompleted!: boolean;
-  @field('notes') notes!: string | null;
-  @field('parent_set_id') parentSetId!: string | null;
-  @readonly @date('created_at') createdAt!: Date;
+  @field('workout_session_id') workoutSessionId = '';
+  @field('exercise_id') exerciseId = '';
+  @field('set_number') setNumber = 0;
+  @field('set_type') setType = '';
+  @field('weight') weight = 0;
+  @field('reps') reps = 0;
+  @field('rpe') rpe: number | null = null;
+  @field('muscle_connection') muscleConnection: number | null = null;
+  @field('is_completed') isCompleted = false;
+  @field('notes') notes: string | null = null;
+  @field('parent_set_id') parentSetId: string | null = null;
+  @readonly @date('created_at') createdAt = new Date();
 
   @relation('workout_sessions', 'workout_session_id') workoutSession: any;
   @relation('exercises', 'exercise_id') exercise: any;

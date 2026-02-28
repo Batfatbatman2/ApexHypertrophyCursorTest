@@ -9,13 +9,13 @@ export default class ProgramExercise extends Model {
     exercises: { type: 'belongs_to' as const, key: 'exercise_id' },
   };
 
-  @field('workout_day_id') workoutDayId!: string;
-  @field('exercise_id') exerciseId!: string;
-  @field('order_index') orderIndex!: number;
-  @field('sets') sets!: number;
-  @field('reps') reps!: number;
-  @field('set_type') setType!: string;
-  @field('notes') notes!: string | null;
+  @field('workout_day_id') workoutDayId = '';
+  @field('exercise_id') exerciseId = '';
+  @field('order_index') orderIndex = 0;
+  @field('sets') sets = 0;
+  @field('reps') reps = 0;
+  @field('set_type') setType = '';
+  @field('notes') notes: string | null = null;
 
   @relation('workout_days', 'workout_day_id') workoutDay: any;
   @relation('exercises', 'exercise_id') exercise: any;
