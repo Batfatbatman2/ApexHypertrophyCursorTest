@@ -125,7 +125,8 @@ export default function HomeScreen() {
   const readinessEntries = useReadinessStore((s) => s.entries);
   const coachInsights = useAICoachStore((s) => s.insights);
   const analyzeHistory = useAICoachStore((s) => s.analyzeWorkoutHistory);
-  const learningInfo = useAICoachStore((s) => s.getLearningPhase());
+  const learningPhase = useAICoachStore((s) => s.learningPhase);
+  const totalAnalyzed = useAICoachStore((s) => s.totalWorkoutsAnalyzed);
 
   const liveStats: StatItem[] = [
     { value: String(workoutCount), label: 'Workouts' },
@@ -309,9 +310,19 @@ export default function HomeScreen() {
             <Text style={s.coachBody}>{coachInsights[0].body}</Text>
             <View style={s.coachPhase}>
               <View style={s.coachPhaseBar}>
-                <View style={[s.coachPhaseFill, { width: `${learningInfo.progress}%` }]} />
+                <View
+                  style={[s.coachPhaseFill, { width: `${Math.min(totalAnalyzed * 5, 100)}%` }]}
+                />
               </View>
-              <Text style={s.coachPhaseText}>{learningInfo.label}</Text>
+              <Text style={s.coachPhaseText}>
+                {learningPhase === 'initial'
+                  ? 'Getting to know you'
+                  : learningPhase === 'calibrating'
+                    ? 'Learning your patterns'
+                    : learningPhase === 'optimized'
+                      ? 'Fully personalized'
+                      : 'Plateau — time for change'}
+              </Text>
             </View>
           </Card>
         )}
