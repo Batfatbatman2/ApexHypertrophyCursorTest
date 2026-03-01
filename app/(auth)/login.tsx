@@ -22,23 +22,42 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, skipAuth } = useAuthStore();
+  const { signIn, skipAuth, isLoading, setLoading } = useAuthStore();
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
+    setLoading(true);
     haptics.success();
+    // Simulate network delay for loading state demonstration
+    await new Promise((resolve) => setTimeout(resolve, 500));
     signIn({
       id: 'user-1',
       email: email || 'user@apex.app',
       name: email ? email.split('@')[0] : 'Athlete',
     });
+    setLoading(false);
     router.replace('/(auth)/onboarding');
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    setLoading(true);
     haptics.light();
+    // Small delay to show loading state
+    await new Promise((resolve) => setTimeout(resolve, 300));
     skipAuth();
-    router.replace('/(tabs)');
+    setLoading(false);
+    router.replace('/');
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={[s.flex, s.loadingContainer]}>
+          <FontAwesome name="bolt" size={48} color={Colors.accent} />
+          <Text style={s.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.safe}>
@@ -180,6 +199,16 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   flex: { flex: 1 },
   content: { paddingHorizontal: 24, paddingBottom: 40 },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    color: Colors.textSecondary,
+    fontSize: 16,
+    marginTop: 16,
+  },
 
   brand: { alignItems: 'center', marginTop: 48, marginBottom: 36 },
   logoCircle: {

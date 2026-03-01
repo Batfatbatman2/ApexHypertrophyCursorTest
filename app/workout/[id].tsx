@@ -501,6 +501,7 @@ function SetRow({
   isFuture,
   onTypeTap,
   onComplete,
+  onDelete,
 }: {
   set: ActiveSet;
   exIdx: number;
@@ -508,10 +509,12 @@ function SetRow({
   isFuture: boolean;
   onTypeTap: (anchorY: number, anchorX: number) => void;
   onComplete: () => void;
+  onDelete: () => void;
 }) {
   const store = useWorkoutStore();
   const typeRef = useRef<View>(null);
   const label = SHORT_LABELS[set.setType];
+  const swipeRef = useRef<Swipeable>(null);
 
   const glowOpacity = useSharedValue(0);
   useEffect(() => {
@@ -536,6 +539,35 @@ function SetRow({
       shadowOpacity: glowOpacity.value * 0.3,
     };
   });
+
+  // Swipe handlers
+  const renderRightActions = () => (
+    <Pressable
+      style={$.deleteAction}
+      onPress={() => {
+        haptics.medium();
+        onDelete();
+        swipeRef.current?.close();
+      }}
+    >
+      <FontAwesome name="trash" size={18} color="#FFF" />
+      <Text style={$.actionText}>Delete</Text>
+    </Pressable>
+  );
+
+  const renderLeftActions = () => (
+    <Pressable
+      style={$.completeAction}
+      onPress={() => {
+        haptics.medium();
+        onComplete();
+        swipeRef.current?.close();
+      }}
+    >
+      <FontAwesome name="check" size={18} color="#FFF" />
+      <Text style={$.actionText}>Complete</Text>
+    </Pressable>
+  );
 
   const rowBase = isActive ? $.rowActive : set.isCompleted ? $.rowCompleted : $.rowFuture;
 

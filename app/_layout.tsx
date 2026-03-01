@@ -64,11 +64,27 @@ export default function RootLayout() {
     if (!loaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
 
-    if (isAuthenticated && hasOnboarded && inAuthGroup) {
-      router.replace('/(tabs)');
-    } else if (!isAuthenticated && !inAuthGroup) {
+    // Protected routes that require authentication
+    const protectedRoutes = [
+      'program',
+      'analytics',
+      'settings',
+      'prs',
+      'workout',
+      'paywall',
+      'coach-report',
+    ];
+    const currentRoute = segments[0];
+    const isProtectedRoute = currentRoute ? protectedRoutes.includes(currentRoute) : false;
+
+    // Only redirect if we're not in auth or tabs groups and trying to access protected route
+    if (!isAuthenticated && !inAuthGroup && !inTabsGroup && currentRoute && isProtectedRoute) {
+      // User is not authenticated and trying to access a protected route
       router.replace('/(auth)/login');
+    } else if (isAuthenticated && hasOnboarded && inAuthGroup) {
+      router.replace('/(tabs)');
     }
   }, [isAuthenticated, hasOnboarded, segments, loaded, router]);
 

@@ -100,8 +100,7 @@ export function WorkoutHistoryCard({
                     {exercise.name}
                   </Text>
                   <Text style={styles.exerciseDetails}>
-                    {exercise.sets}×{exercise.reps}
-                    {exercise.weight ? @ ${exercise.weight}lbs` : ''}
+                    {exercise.sets}×{exercise.reps}{exercise.weight ? ` @ ${exercise.weight}lbs` : ''}
                   </Text>
                 </View>
               ))}

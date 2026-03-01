@@ -22,3 +22,5 @@ export { SectionHeader } from './SectionHeader';
 export { Skeleton, SkeletonCard, SkeletonRow } from './Skeleton';
 
 export { AppErrorBoundary } from './ErrorBoundary';
+
+export { Confetti, PRConfetti } from './Confetti';
