@@ -11,6 +11,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { Swipeable } from 'react-native-gesture-handler';
 
 import { Colors } from '@/constants/Colors';
 import { SET_TYPES, type SetType } from '@/constants/set-types';
@@ -330,6 +331,7 @@ export default function WorkoutScreen() {
                     })
                   }
                   onComplete={() => handleCompleteSet(set.id)}
+                  onDelete={() => store.removeSet(currentExerciseIndex, set.id)}
                 />
               );
             })}
@@ -538,7 +540,16 @@ function SetRow({
   const rowBase = isActive ? $.rowActive : set.isCompleted ? $.rowCompleted : $.rowFuture;
 
   return (
-    <Animated.View style={[$.row, rowBase, isFuture && { opacity: 0.5 }, isActive && activeGlow]}>
+    <Swipeable
+      ref={swipeRef}
+      renderRightActions={renderRightActions}
+      renderLeftActions={renderLeftActions}
+      leftThreshold={40}
+      rightThreshold={40}
+      overshootRight={false}
+      overshootLeft={false}
+    >
+      <Animated.View style={[$.row, rowBase, isFuture && { opacity: 0.5 }, isActive && activeGlow]}>
       {/* Left accent bar (active only) */}
       {isActive && <View style={$.activeAccent} />}
 
@@ -613,7 +624,8 @@ function SetRow({
           <View style={$.checkFuture} />
         )}
       </Pressable>
-    </Animated.View>
+      </Animated.View>
+      </Swipeable>
   );
 }
 
@@ -1002,4 +1014,30 @@ const $ = StyleSheet.create({
   },
   swapRowName: { color: '#fff', fontSize: 14, fontWeight: '600' },
   swapRowMeta: { color: '#777', fontSize: 11, marginTop: 2 },
+
+  /* Swipe actions */
+  completeAction: {
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginBottom: 8,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  deleteAction: {
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginBottom: 8,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  actionText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+  },
 });
