@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { MUSCLE_GROUPS } from '@/constants/muscle-groups';
+import { appStorage } from '@/lib/storage';
 
 export type WeightUnit = 'lbs' | 'kg';
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -32,28 +34,23 @@ interface SettingsState {
   resetAllSettings: () => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-  weightUnit: 'lbs',
-  defaultRestDuration: 90,
-  autoStartTimer: true,
-  hapticsEnabled: true,
-  notificationsEnabled: true,
-  theme: 'dark',
-  volumeTargets: buildDefaultTargets(),
+// Custom storage adapter for Zustand persist using MMKV
+const zustandStorage = {
+  getItem: (name: string): string | null => {
+    const value = appStorage.getString(name);
+    return value ?? null;
+  },
+  setItem: (name: string, value: string): void => {
+    appStorage.set(name, value);
+  },
+  removeItem: (name: string): void => {
+    appStorage.delete(name);
+  },
+};
 
-  setWeightUnit: (unit) => set({ weightUnit: unit }),
-  setDefaultRestDuration: (seconds) => set({ defaultRestDuration: seconds }),
-  setAutoStartTimer: (enabled) => set({ autoStartTimer: enabled }),
-  setHapticsEnabled: (enabled) => set({ hapticsEnabled: enabled }),
-  setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
-  setTheme: (theme) => set({ theme }),
-  setVolumeTarget: (muscleId, sets) =>
-    set((s) => ({
-      volumeTargets: { ...s.volumeTargets, [muscleId]: Math.max(0, Math.min(30, sets)) },
-    })),
-  resetVolumeTargets: () => set({ volumeTargets: buildDefaultTargets() }),
-  resetAllSettings: () =>
-    set({
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
       weightUnit: 'lbs',
       defaultRestDuration: 90,
       autoStartTimer: true,
@@ -61,5 +58,32 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       notificationsEnabled: true,
       theme: 'dark',
       volumeTargets: buildDefaultTargets(),
+
+      setWeightUnit: (unit) => set({ weightUnit: unit }),
+      setDefaultRestDuration: (seconds) => set({ defaultRestDuration: seconds }),
+      setAutoStartTimer: (enabled) => set({ autoStartTimer: enabled }),
+      setHapticsEnabled: (enabled) => set({ hapticsEnabled: enabled }),
+      setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
+      setTheme: (theme) => set({ theme }),
+      setVolumeTarget: (muscleId, sets) =>
+        set((s) => ({
+          volumeTargets: { ...s.volumeTargets, [muscleId]: Math.max(0, Math.min(30, sets)) },
+        })),
+      resetVolumeTargets: () => set({ volumeTargets: buildDefaultTargets() }),
+      resetAllSettings: () =>
+        set({
+          weightUnit: 'lbs',
+          defaultRestDuration: 90,
+          autoStartTimer: true,
+          hapticsEnabled: true,
+          notificationsEnabled: true,
+          theme: 'dark',
+          volumeTargets: buildDefaultTargets(),
+        }),
     }),
-}));
+    {
+      name: 'apex-settings',
+      storage: createJSONStorage(() => zustandStorage),
+    }
+  )
+);

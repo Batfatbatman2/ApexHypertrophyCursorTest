@@ -9,11 +9,11 @@ export default class WorkoutDay extends Model {
     program_exercises: { type: 'has_many' as const, foreignKey: 'workout_day_id' },
   };
 
-  @field('program_id') programId!: string;
-  @field('day_number') dayNumber!: number;
-  @field('name') name!: string;
-  @field('is_rest_day') isRestDay!: boolean;
-  @field('estimated_duration') estimatedDuration!: number | null;
+  @field('program_id') programId = '';
+  @field('day_number') dayNumber = 0;
+  @field('name') name = '';
+  @field('is_rest_day') isRestDay = false;
+  @field('estimated_duration') estimatedDuration: number | null = null;
 
   @relation('programs', 'program_id') program: any;
   @children('program_exercises') programExercises: any;

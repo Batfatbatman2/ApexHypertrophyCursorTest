@@ -454,24 +454,24 @@ Matching mockup screenshots 10 and 11.
 
 ## Phase 14: Subscription & Paywall (RevenueCat)
 
-- [ ] **14.1** RevenueCat SDK setup with Apple App Store + Google Play Store products
-- [ ] **14.2** Subscription plans: $9.99/month and $89/year
-- [ ] **14.3** 7-day free trial flow
-- [ ] **14.4** Cinematic paywall screen — blurred preview background + feature highlights + one-tap subscribe
-- [ ] **14.5** Entitlement checks on gated screens
-- [ ] **14.6** Subscription management (cancel, restore purchases)
+- [x] **14.1** RevenueCat SDK setup with Apple App Store + Google Play Store products
+- [x] **14.2** Subscription plans: $9.99/month and $89/year
+- [x] **14.3** 7-day free trial flow
+- [x] **14.4** Cinematic paywall screen — blurred preview background + feature highlights + one-tap subscribe
+- [x] **14.5** Entitlement checks on gated screens
+- [x] **14.6** Subscription management (cancel, restore purchases)
 
 ---
 
 ## Phase 15: Cloud Sync (WatermelonDB ↔ Supabase)
 
-- [ ] **15.1** Supabase PostgreSQL schema matching WatermelonDB models
-- [ ] **15.2** Row-level security policies (users can only access own data)
-- [ ] **15.3** WatermelonDB sync adapter — pull/push via Supabase Edge Function
-- [ ] **15.4** Conflict resolution: last-write-wins with manual merge fallback for critical data
-- [ ] **15.5** Pending operation queue with exponential backoff retry
-- [ ] **15.6** Background sync trigger on network reconnect
-- [ ] **15.7** Sync status indicator in UI
+- [x] **15.1** Supabase PostgreSQL schema matching WatermelonDB models
+- [x] **15.2** Row-level security policies (users can only access own data)
+- [x] **15.3** WatermelonDB sync adapter — pull/push via Supabase Edge Function
+- [x] **15.4** Conflict resolution: last-write-wins with manual merge fallback for critical data
+- [x] **15.5** Pending operation queue with exponential backoff retry
+- [x] **15.6** Background sync trigger on network reconnect
+- [x] **15.7** Sync status indicator in UI
 
 ---
 

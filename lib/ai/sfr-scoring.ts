@@ -1,10 +1,10 @@
+import { ExerciseStatus } from './exercise-compatibility';
+
+// Re-export for convenience
+export type { ExerciseStatus };
+
 /**
- * Stimulus-to-Fatigue Ratio (SFR) Scoring Engine
- *
- * Combines population-level SFR data with individual user feedback
- * to rank exercises by effectiveness for each user.
- *
- * Formula: (PopSFR × 0.3) + (Connection × 0.5) − (Pain × 0.2)
+ * Determines exercise status based on SFR and pain reports
  */
 
 export interface ExerciseFeedback {
@@ -72,8 +72,6 @@ export function computeSFR(popSfr: number, feedback: ExerciseFeedback | undefine
     reasoning,
   };
 }
-
-export type ExerciseStatus = 'proven' | 'experimental' | 'blacklisted';
 
 export function determineExerciseStatus(
   sfr: SFRScore,

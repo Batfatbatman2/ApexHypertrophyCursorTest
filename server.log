@@ -1,0 +1,102 @@
+Starting project at /workspace/project/ApexHypertrophyCursorTest
+Starting Metro Bundler
+
+ ERROR  An unknown error occurred while installing React Native DevTools. Details:
+
+[1298:0301/215912.827427:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:169] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /home/openhands/.cache/dotslash/cb/2a59c5919ce27ef30b55119edf89e556e015ef/React Native DevTools-linux-x64/chrome-sandbox is owned by root and has mode 4755.
+[1301:0100/000000.903567:ERROR:content/zygote/zygote_linux.cc:660] write: Broken pipe (32)
+
+The following packages should be updated for best compatibility with the installed expo version:
+  @react-native-async-storage/async-storage@3.0.1 - expected version: 2.2.0
+  expo@55.0.3 - expected version: ~55.0.4
+  react-native-gesture-handler@2.27.2 - expected version: ~2.30.0
+  @types/jest@30.0.0 - expected version: 29.5.14
+  eslint-config-expo@9.2.0 - expected version: ~55.0.0
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 44.1% (172/259)
+λ node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js ▓▓▓▓▓░░░░░░░░░░░ 31.8% (141/306)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.7% (328/505)
+λ node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓░░░░░░░░░░ 39.9% (468/743)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 56.0% (586/783)
+λ node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.5% ( 942/1106)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 75.8% ( 992/1147)
+λ node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 87.5% (1222/1306)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.4% (1560/1802)
+λ node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.0% (1658/1666)
+λ Bundled 18343ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1670 modules)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+Web Bundled 19879ms node_modules/expo-router/entry.js (1905 modules)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+λ Bundled 38ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 321ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.3% (514/747)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 71.6% ( 930/1099)
+Web Bundled 10013ms node_modules/expo-router/entry.js (1906 modules)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 44ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+Web Bundled 384ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 65ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+λ Bundled 31ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 291ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 97ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 47ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+Web Bundled 329ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 132ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 49ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+Web Bundled 388ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 83ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ Bundled 33ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 272ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 73ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+λ Bundled 34ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 292ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 78ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+λ Bundled 34ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 312ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 101ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ Bundled 33ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 262ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 97ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+"shadow*" style props are deprecated. Use "boxShadow".
+λ  WARN  Route "./paywall.tsx" is missing the required default export. Ensure a React component is exported as default. 
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+λ Bundled 48ms node_modules/expo/node_modules/@expo/cli/node_modules/@expo/router-server/node/render.js (1 module)
+Web Bundled 381ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 78ms node_modules/expo-router/entry.js (1 module)
